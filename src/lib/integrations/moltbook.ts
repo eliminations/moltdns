@@ -153,6 +153,9 @@ class MoltbookClient {
     const response = await this.fetch<MoltbookApiResponse<MoltbookAgent>>(
       `/agents/${agentId}`
     );
+    if (!response.data) {
+      throw new Error(`Agent ${agentId} not found`);
+    }
     return response.data;
   }
 
@@ -168,7 +171,7 @@ class MoltbookClient {
     const response = await this.fetch<MoltbookApiResponse<MoltbookAgent[]>>(
       `/agents/search?${params.toString()}`
     );
-    return response.data;
+    return response.data ?? [];
   }
 
   /**
@@ -178,7 +181,7 @@ class MoltbookClient {
     const response = await this.fetch<MoltbookApiResponse<MoltbookSubmolt[]>>(
       `/submolts?limit=${limit}&sort=subscribers`
     );
-    return response.data;
+    return response.data ?? [];
   }
 
   /**
@@ -215,6 +218,9 @@ class MoltbookClient {
     const response = await this.fetch<MoltbookApiResponse<MoltbookPost>>(
       `/posts/${postId}`
     );
+    if (!response.data) {
+      throw new Error(`Post ${postId} not found`);
+    }
     return response.data;
   }
 
@@ -233,7 +239,7 @@ class MoltbookClient {
     const response = await this.fetch<MoltbookApiResponse<MoltbookComment[]>>(
       `/posts/${postId}/comments?${params.toString()}`
     );
-    return response.data;
+    return response.data ?? [];
   }
 
   /**
@@ -255,6 +261,9 @@ class MoltbookClient {
         }),
       }
     );
+    if (!response.data) {
+      throw new Error("Failed to create post");
+    }
     return response.data;
   }
 
@@ -269,6 +278,9 @@ class MoltbookClient {
         body: JSON.stringify({ content }),
       }
     );
+    if (!response.data) {
+      throw new Error("Failed to create comment");
+    }
     return response.data;
   }
 
@@ -309,7 +321,7 @@ class MoltbookClient {
     const response = await this.fetch<MoltbookApiResponse<MoltbookPost[]>>(
       `/agents/${agentId}/posts?${params.toString()}`
     );
-    return response.data;
+    return response.data ?? [];
   }
 
   /**

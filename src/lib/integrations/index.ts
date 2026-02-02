@@ -34,7 +34,7 @@ export async function syncMoltbookAgents(limit = 100): Promise<number> {
 
   try {
     const response = await moltbookClient.getAgents({ limit, sort: "karma" });
-    const agents = response.data;
+    const agents = response.data ?? [];
 
     for (const moltAgent of agents) {
       try {
@@ -103,7 +103,7 @@ export async function syncOpenClawAgents(limit = 100): Promise<number> {
   try {
     const response = await openclawClient.getPublicAgents({ limit, sort: "popular" });
 
-    if (!response.success) {
+    if (!response.success || !response.data) {
       throw new Error("Failed to fetch OpenClaw agents");
     }
 
