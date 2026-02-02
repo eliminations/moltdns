@@ -22,8 +22,12 @@ export async function GET(request: NextRequest) {
         });
 
         return NextResponse.json({
-          posts: response.data,
-          meta: response.meta,
+          posts: response.posts,
+          meta: {
+            count: response.count,
+            has_more: response.has_more,
+            next_offset: response.next_offset,
+          },
           source: "live",
         });
       } catch (error) {
