@@ -1,0 +1,172 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Agent {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  avatar        String?
+  platform      String   // moltbook, openclaw, custom
+  platformId    String?
+  platformUrl   String?
+  category      String?
+  tags          String   @default("[]") // JSON array stored as string
+  capabilities  String   @default("[]") // JSON array stored as string
+
+  // Metrics
+  trustScore    Float    @default(0)
+  activityScore Float    @default(0)
+  popularity    Int      @default(0)
+
+  // Trust breakdown (stored as percentages 0-100)
+  verificationScore  Float @default(0)
+  activityConsistency Float @default(0)
+  communityFeedback  Float @default(0)
+  codeAuditScore     Float @default(0)
+  transparencyScore  Float @default(0)
+
+  // Timestamps
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  lastActive        DateTime?
+  platformCreatedAt DateTime?
+
+  // Ownership
+  ownerId  String?
+  verified Boolean @default(false)
+
+  // Relations
+  metrics AgentMetric[]
+  reviews Review[]
+
+  @@unique([platform, platformId])
+  @@index([platform])
+  @@index([trustScore])
+  @@index([popularity])
+}
+
+model AgentMetric {
+  id      String @id @default(cuid())
+  agentId String
+  agent   Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  date         DateTime @default(now())
+  interactions Int      @default(0)
+  users        Int      @default(0)
+  upvotes      Int      @default(0)
+
+  @@index([agentId, date])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  rating    Int      // 1-5
+  comment   String?
+  author    String?
+  createdAt DateTime @default(now())
+
+  @@index([agentId])
+}
+
+model VerificationRequest {
+  id          String   @id @default(cuid())
+  projectName String
+  githubUrl   String?
+  description String
+  category    String?
+
+  // Analysis results
+  score       Float?
+  feedback    String?  // JSON with detailed feedback
+  status      String   @default("pending") // pending, analyzing, completed, failed
+
+  // Contact
+  email       String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Post {
+  id            String   @id @default(cuid())
+  platformId    String   @unique
+  platform      String   @default("moltbook")
+
+  title         String
+  content       String
+  url           String?
+
+  authorId      String?
+  authorName    String
+  authorAvatar  String?
+
+  submolt       String?
+  submoltName   String?
+
+  upvotes       Int      @default(0)
+  downvotes     Int      @default(0)
+  commentCount  Int      @default(0)
+
+  createdAt     DateTime @default(now())
+  postedAt      DateTime
+
+  comments      Comment[]
+
+  @@index([platform])
+  @@index([authorId])
+  @@index([postedAt])
+}
+
+model Comment {
+  id            String   @id @default(cuid())
+  platformId    String   @unique
+  postId        String
+  post          Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  content       String
+  authorId      String?
+  authorName    String
+  authorAvatar  String?
+
+  upvotes       Int      @default(0)
+  downvotes     Int      @default(0)
+
+  createdAt     DateTime @default(now())
+  postedAt      DateTime
+
+  @@index([postId])
+  @@index([authorId])
+}
+
+model Submolt {
+  id              String   @id @default(cuid())
+  platformId      String   @unique
+  name            String
+  displayName     String?
+  description     String?
+  subscriberCount Int      @default(0)
+  postCount       Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  @@index([name])
+}
+
+model SyncLog {
+  id          String   @id @default(cuid())
+  platform    String
+  type        String   // agents, posts, submolts
+  status      String   // success, failed
+  count       Int      @default(0)
+  error       String?
+  createdAt   DateTime @default(now())
+
+  @@index([platform, createdAt])
+}
