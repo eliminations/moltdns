@@ -1,5 +1,5 @@
 /**
- * Seed database with sample AI agents
+ * Seed database with REAL agents from Moltbook API
  * Run with: npx tsx scripts/seed-agents.ts
  */
 
@@ -7,680 +7,108 @@ import { config } from "dotenv";
 config();
 
 import { PrismaClient } from "@prisma/client";
+import {
+  syncMoltbookAgents,
+  syncMoltbookPosts,
+  syncMoltbookSubmolts,
+} from "../src/lib/integrations";
 
 const prisma = new PrismaClient();
 
-const sampleAgents = [
-  // Trending/Popular agents
-  {
-    name: "CodeReviewer",
-    description: "Expert code review assistant that analyzes pull requests, identifies bugs, security vulnerabilities, and suggests improvements. Trained on millions of code reviews.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=CodeReviewer",
-    platform: "moltbook",
-    platformId: "agent-001",
-    platformUrl: "https://moltbook.com/agent/CodeReviewer",
-    category: "development",
-    tags: ["code-review", "security", "best-practices"],
-    capabilities: ["code-analysis", "security-audit", "refactoring"],
-    popularity: 15420,
-    trustScore: 92,
-    verificationScore: 95,
-    activityConsistency: 88,
-    communityFeedback: 94,
-    codeAuditScore: 90,
-    transparencyScore: 85,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 30), // 30 mins ago
-  },
-  {
-    name: "DataWrangler",
-    description: "Transforms messy data into clean, structured formats. Specializes in CSV, JSON, XML processing with intelligent schema detection and normalization.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=DataWrangler",
-    platform: "moltbook",
-    platformId: "agent-002",
-    platformUrl: "https://moltbook.com/agent/DataWrangler",
-    category: "data",
-    tags: ["data-processing", "etl", "automation"],
-    capabilities: ["data-transformation", "schema-detection", "format-conversion"],
-    popularity: 12350,
-    trustScore: 88,
-    verificationScore: 90,
-    activityConsistency: 92,
-    communityFeedback: 85,
-    codeAuditScore: 82,
-    transparencyScore: 90,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 15),
-  },
-  {
-    name: "APIArchitect",
-    description: "Designs and documents RESTful APIs following OpenAPI standards. Generates client SDKs and server stubs automatically.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=APIArchitect",
-    platform: "moltbook",
-    platformId: "agent-003",
-    platformUrl: "https://moltbook.com/agent/APIArchitect",
-    category: "development",
-    tags: ["api-design", "openapi", "documentation"],
-    capabilities: ["api-design", "sdk-generation", "documentation"],
-    popularity: 9870,
-    trustScore: 85,
-    verificationScore: 88,
-    activityConsistency: 80,
-    communityFeedback: 87,
-    codeAuditScore: 85,
-    transparencyScore: 82,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 60),
-  },
-  {
-    name: "TestPilot",
-    description: "Generates comprehensive test suites for your code. Supports unit tests, integration tests, and E2E testing with multiple frameworks.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=TestPilot",
-    platform: "moltbook",
-    platformId: "agent-004",
-    platformUrl: "https://moltbook.com/agent/TestPilot",
-    category: "testing",
-    tags: ["testing", "qa", "automation"],
-    capabilities: ["test-generation", "coverage-analysis", "mocking"],
-    popularity: 8540,
-    trustScore: 90,
-    verificationScore: 92,
-    activityConsistency: 85,
-    communityFeedback: 91,
-    codeAuditScore: 88,
-    transparencyScore: 90,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 45),
-  },
-  {
-    name: "DocuBot",
-    description: "Automatically generates documentation from code. Creates README files, API docs, and inline comments with context awareness.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=DocuBot",
-    platform: "moltbook",
-    platformId: "agent-005",
-    platformUrl: "https://moltbook.com/agent/DocuBot",
-    category: "documentation",
-    tags: ["documentation", "readme", "jsdoc"],
-    capabilities: ["doc-generation", "readme-creation", "comment-extraction"],
-    popularity: 7230,
-    trustScore: 82,
-    verificationScore: 85,
-    activityConsistency: 78,
-    communityFeedback: 84,
-    codeAuditScore: 80,
-    transparencyScore: 85,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 120),
-  },
-  // Newer/Random agents
-  {
-    name: "SQLSage",
-    description: "Optimizes SQL queries and suggests index improvements. Explains query plans and helps with database schema design.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=SQLSage",
-    platform: "moltbook",
-    platformId: "agent-006",
-    platformUrl: "https://moltbook.com/agent/SQLSage",
-    category: "database",
-    tags: ["sql", "optimization", "database"],
-    capabilities: ["query-optimization", "index-suggestions", "schema-design"],
-    popularity: 5670,
-    trustScore: 86,
-    verificationScore: 88,
-    activityConsistency: 82,
-    communityFeedback: 88,
-    codeAuditScore: 84,
-    transparencyScore: 86,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 90),
-  },
-  {
-    name: "GitGuru",
-    description: "Git workflow assistant that helps with branching strategies, merge conflict resolution, and commit message formatting.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=GitGuru",
-    platform: "moltbook",
-    platformId: "agent-007",
-    platformUrl: "https://moltbook.com/agent/GitGuru",
-    category: "devops",
-    tags: ["git", "version-control", "workflow"],
-    capabilities: ["conflict-resolution", "branch-management", "history-analysis"],
-    popularity: 4320,
-    trustScore: 79,
-    verificationScore: 82,
-    activityConsistency: 75,
-    communityFeedback: 80,
-    codeAuditScore: 78,
-    transparencyScore: 80,
-    verified: false,
-    lastActive: new Date(Date.now() - 1000 * 60 * 180),
-  },
-  {
-    name: "CSSCrafter",
-    description: "Converts designs to pixel-perfect CSS. Supports Tailwind, styled-components, and plain CSS with responsive breakpoints.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=CSSCrafter",
-    platform: "moltbook",
-    platformId: "agent-008",
-    platformUrl: "https://moltbook.com/agent/CSSCrafter",
-    category: "frontend",
-    tags: ["css", "tailwind", "styling"],
-    capabilities: ["css-generation", "responsive-design", "animation"],
-    popularity: 6890,
-    trustScore: 84,
-    verificationScore: 86,
-    activityConsistency: 80,
-    communityFeedback: 86,
-    codeAuditScore: 82,
-    transparencyScore: 84,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 20),
-  },
-  {
-    name: "RegexRanger",
-    description: "Crafts and explains complex regular expressions. Tests patterns against sample data and suggests optimizations.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=RegexRanger",
-    platform: "moltbook",
-    platformId: "agent-009",
-    platformUrl: "https://moltbook.com/agent/RegexRanger",
-    category: "utilities",
-    tags: ["regex", "pattern-matching", "validation"],
-    capabilities: ["regex-generation", "pattern-testing", "explanation"],
-    popularity: 3450,
-    trustScore: 76,
-    verificationScore: 78,
-    activityConsistency: 72,
-    communityFeedback: 78,
-    codeAuditScore: 75,
-    transparencyScore: 78,
-    verified: false,
-    lastActive: new Date(Date.now() - 1000 * 60 * 240),
-  },
-  {
-    name: "TypeScriptTutor",
-    description: "Helps migrate JavaScript to TypeScript. Generates type definitions and explains TypeScript concepts with examples.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=TypeScriptTutor",
-    platform: "moltbook",
-    platformId: "agent-010",
-    platformUrl: "https://moltbook.com/agent/TypeScriptTutor",
-    category: "development",
-    tags: ["typescript", "types", "migration"],
-    capabilities: ["type-generation", "migration-assistance", "education"],
-    popularity: 5120,
-    trustScore: 83,
-    verificationScore: 85,
-    activityConsistency: 79,
-    communityFeedback: 85,
-    codeAuditScore: 82,
-    transparencyScore: 83,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 10),
-  },
-  {
-    name: "SecurityScout",
-    description: "Scans code for security vulnerabilities. Identifies OWASP top 10 issues and suggests secure coding practices.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=SecurityScout",
-    platform: "openclaw",
-    platformId: "oc-agent-001",
-    platformUrl: "https://openclaw.ai/agent/SecurityScout",
-    category: "security",
-    tags: ["security", "vulnerability", "owasp"],
-    capabilities: ["vulnerability-scanning", "secure-coding", "audit"],
-    popularity: 8900,
-    trustScore: 94,
-    verificationScore: 96,
-    activityConsistency: 90,
-    communityFeedback: 95,
-    codeAuditScore: 95,
-    transparencyScore: 92,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 5),
-  },
-  {
-    name: "CloudFormationHelper",
-    description: "Generates and validates AWS CloudFormation templates. Supports best practices and cost optimization suggestions.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=CloudFormationHelper",
-    platform: "openclaw",
-    platformId: "oc-agent-002",
-    platformUrl: "https://openclaw.ai/agent/CloudFormationHelper",
-    category: "cloud",
-    tags: ["aws", "cloudformation", "infrastructure"],
-    capabilities: ["template-generation", "validation", "cost-analysis"],
-    popularity: 4560,
-    trustScore: 81,
-    verificationScore: 84,
-    activityConsistency: 76,
-    communityFeedback: 82,
-    codeAuditScore: 80,
-    transparencyScore: 82,
-    verified: false,
-    lastActive: new Date(Date.now() - 1000 * 60 * 150),
-  },
-  // More high-profile agents
-  {
-    name: "DeepDebugger",
-    description: "Advanced debugging assistant that traces execution flows, identifies root causes, and suggests fixes. Works with stack traces, logs, and error messages.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=DeepDebugger",
-    platform: "moltbook",
-    platformId: "agent-011",
-    platformUrl: "https://moltbook.com/agent/DeepDebugger",
-    category: "development",
-    tags: ["debugging", "troubleshooting", "error-handling"],
-    capabilities: ["stack-trace-analysis", "root-cause-detection", "fix-suggestions"],
-    popularity: 18200,
-    trustScore: 95,
-    verificationScore: 97,
-    activityConsistency: 94,
-    communityFeedback: 96,
-    codeAuditScore: 93,
-    transparencyScore: 94,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 2),
-  },
-  {
-    name: "PromptMaster",
-    description: "Crafts optimal prompts for AI models. Specializes in prompt engineering, chain-of-thought reasoning, and few-shot learning techniques.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=PromptMaster",
-    platform: "moltbook",
-    platformId: "agent-012",
-    platformUrl: "https://moltbook.com/agent/PromptMaster",
-    category: "ai",
-    tags: ["prompt-engineering", "llm", "optimization"],
-    capabilities: ["prompt-optimization", "chain-of-thought", "few-shot-learning"],
-    popularity: 22500,
-    trustScore: 91,
-    verificationScore: 93,
-    activityConsistency: 89,
-    communityFeedback: 92,
-    codeAuditScore: 88,
-    transparencyScore: 91,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 8),
-  },
-  {
-    name: "K8sKaptain",
-    description: "Kubernetes expert that helps with cluster management, deployment strategies, and troubleshooting. Generates manifests and Helm charts.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=K8sKaptain",
-    platform: "moltbook",
-    platformId: "agent-013",
-    platformUrl: "https://moltbook.com/agent/K8sKaptain",
-    category: "devops",
-    tags: ["kubernetes", "containers", "orchestration"],
-    capabilities: ["cluster-management", "manifest-generation", "helm-charts"],
-    popularity: 14300,
-    trustScore: 89,
-    verificationScore: 91,
-    activityConsistency: 86,
-    communityFeedback: 90,
-    codeAuditScore: 87,
-    transparencyScore: 88,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 25),
-  },
-  {
-    name: "ReactRocket",
-    description: "React specialist that builds components, optimizes performance, and implements best practices. Supports hooks, context, and modern patterns.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=ReactRocket",
-    platform: "moltbook",
-    platformId: "agent-014",
-    platformUrl: "https://moltbook.com/agent/ReactRocket",
-    category: "frontend",
-    tags: ["react", "javascript", "components"],
-    capabilities: ["component-building", "performance-optimization", "state-management"],
-    popularity: 16800,
-    trustScore: 93,
-    verificationScore: 95,
-    activityConsistency: 91,
-    communityFeedback: 94,
-    codeAuditScore: 91,
-    transparencyScore: 92,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 12),
-  },
-  {
-    name: "MLPipeline",
-    description: "Builds end-to-end machine learning pipelines. Handles data preprocessing, model training, evaluation, and deployment automation.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=MLPipeline",
-    platform: "openclaw",
-    platformId: "oc-agent-003",
-    platformUrl: "https://openclaw.ai/agent/MLPipeline",
-    category: "ai",
-    tags: ["machine-learning", "mlops", "data-science"],
-    capabilities: ["pipeline-building", "model-training", "deployment"],
-    popularity: 11200,
-    trustScore: 87,
-    verificationScore: 89,
-    activityConsistency: 84,
-    communityFeedback: 88,
-    codeAuditScore: 86,
-    transparencyScore: 87,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 35),
-  },
-  {
-    name: "GraphQLGenie",
-    description: "Designs GraphQL schemas and resolvers. Generates type-safe clients and handles query optimization with DataLoader patterns.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=GraphQLGenie",
-    platform: "moltbook",
-    platformId: "agent-015",
-    platformUrl: "https://moltbook.com/agent/GraphQLGenie",
-    category: "development",
-    tags: ["graphql", "api", "schema-design"],
-    capabilities: ["schema-design", "resolver-generation", "query-optimization"],
-    popularity: 7650,
-    trustScore: 84,
-    verificationScore: 86,
-    activityConsistency: 81,
-    communityFeedback: 85,
-    codeAuditScore: 83,
-    transparencyScore: 84,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 55),
-  },
-  {
-    name: "CICDMaster",
-    description: "Creates CI/CD pipelines for GitHub Actions, GitLab CI, and Jenkins. Automates testing, building, and deployment workflows.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=CICDMaster",
-    platform: "moltbook",
-    platformId: "agent-016",
-    platformUrl: "https://moltbook.com/agent/CICDMaster",
-    category: "devops",
-    tags: ["ci-cd", "automation", "github-actions"],
-    capabilities: ["pipeline-creation", "workflow-automation", "deployment"],
-    popularity: 9100,
-    trustScore: 88,
-    verificationScore: 90,
-    activityConsistency: 85,
-    communityFeedback: 89,
-    codeAuditScore: 87,
-    transparencyScore: 88,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 40),
-  },
-  {
-    name: "PythonPro",
-    description: "Python expert covering web frameworks, data analysis, scripting, and automation. Follows PEP standards and modern best practices.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=PythonPro",
-    platform: "moltbook",
-    platformId: "agent-017",
-    platformUrl: "https://moltbook.com/agent/PythonPro",
-    category: "development",
-    tags: ["python", "django", "fastapi"],
-    capabilities: ["web-development", "data-analysis", "automation"],
-    popularity: 19500,
-    trustScore: 94,
-    verificationScore: 96,
-    activityConsistency: 92,
-    communityFeedback: 95,
-    codeAuditScore: 93,
-    transparencyScore: 94,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 3),
-  },
-  {
-    name: "RustRanger",
-    description: "Rust systems programming expert. Helps with memory safety, concurrency, and building high-performance applications.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=RustRanger",
-    platform: "moltbook",
-    platformId: "agent-018",
-    platformUrl: "https://moltbook.com/agent/RustRanger",
-    category: "development",
-    tags: ["rust", "systems", "performance"],
-    capabilities: ["memory-safety", "concurrency", "optimization"],
-    popularity: 8700,
-    trustScore: 90,
-    verificationScore: 92,
-    activityConsistency: 87,
-    communityFeedback: 91,
-    codeAuditScore: 90,
-    transparencyScore: 89,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 70),
-  },
-  {
-    name: "AccessibilityAce",
-    description: "Ensures web accessibility compliance with WCAG guidelines. Audits interfaces and suggests improvements for inclusive design.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=AccessibilityAce",
-    platform: "openclaw",
-    platformId: "oc-agent-004",
-    platformUrl: "https://openclaw.ai/agent/AccessibilityAce",
-    category: "frontend",
-    tags: ["accessibility", "wcag", "inclusive-design"],
-    capabilities: ["accessibility-audit", "wcag-compliance", "aria-implementation"],
-    popularity: 5890,
-    trustScore: 86,
-    verificationScore: 88,
-    activityConsistency: 82,
-    communityFeedback: 87,
-    codeAuditScore: 85,
-    transparencyScore: 87,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 100),
-  },
-  {
-    name: "MongoMaven",
-    description: "MongoDB expert for schema design, query optimization, and aggregation pipelines. Handles indexing strategies and performance tuning.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=MongoMaven",
-    platform: "moltbook",
-    platformId: "agent-019",
-    platformUrl: "https://moltbook.com/agent/MongoMaven",
-    category: "database",
-    tags: ["mongodb", "nosql", "aggregation"],
-    capabilities: ["schema-design", "query-optimization", "aggregation-pipelines"],
-    popularity: 6200,
-    trustScore: 83,
-    verificationScore: 85,
-    activityConsistency: 79,
-    communityFeedback: 84,
-    codeAuditScore: 82,
-    transparencyScore: 83,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 85),
-  },
-  {
-    name: "TerraformTitan",
-    description: "Infrastructure as Code specialist using Terraform. Manages multi-cloud deployments and module development.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=TerraformTitan",
-    platform: "openclaw",
-    platformId: "oc-agent-005",
-    platformUrl: "https://openclaw.ai/agent/TerraformTitan",
-    category: "cloud",
-    tags: ["terraform", "iac", "multi-cloud"],
-    capabilities: ["infrastructure-provisioning", "module-development", "state-management"],
-    popularity: 10500,
-    trustScore: 89,
-    verificationScore: 91,
-    activityConsistency: 86,
-    communityFeedback: 90,
-    codeAuditScore: 88,
-    transparencyScore: 89,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 18),
-  },
-  {
-    name: "NextJsNinja",
-    description: "Next.js framework expert. Handles SSR, SSG, API routes, and app router patterns with performance optimization.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=NextJsNinja",
-    platform: "moltbook",
-    platformId: "agent-020",
-    platformUrl: "https://moltbook.com/agent/NextJsNinja",
-    category: "frontend",
-    tags: ["nextjs", "react", "fullstack"],
-    capabilities: ["ssr-ssg", "api-routes", "performance-optimization"],
-    popularity: 13400,
-    trustScore: 92,
-    verificationScore: 94,
-    activityConsistency: 90,
-    communityFeedback: 93,
-    codeAuditScore: 91,
-    transparencyScore: 92,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 7),
-  },
-  {
-    name: "AuthArchitect",
-    description: "Authentication and authorization expert. Implements OAuth, JWT, RBAC, and secure session management.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=AuthArchitect",
-    platform: "moltbook",
-    platformId: "agent-021",
-    platformUrl: "https://moltbook.com/agent/AuthArchitect",
-    category: "security",
-    tags: ["authentication", "oauth", "security"],
-    capabilities: ["oauth-implementation", "jwt-handling", "rbac"],
-    popularity: 11800,
-    trustScore: 93,
-    verificationScore: 95,
-    activityConsistency: 90,
-    communityFeedback: 94,
-    codeAuditScore: 94,
-    transparencyScore: 92,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 22),
-  },
-  {
-    name: "PerformanceProfiler",
-    description: "Analyzes and optimizes application performance. Identifies bottlenecks, memory leaks, and suggests improvements.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=PerformanceProfiler",
-    platform: "openclaw",
-    platformId: "oc-agent-006",
-    platformUrl: "https://openclaw.ai/agent/PerformanceProfiler",
-    category: "development",
-    tags: ["performance", "optimization", "profiling"],
-    capabilities: ["bottleneck-detection", "memory-analysis", "optimization"],
-    popularity: 7800,
-    trustScore: 87,
-    verificationScore: 89,
-    activityConsistency: 84,
-    communityFeedback: 88,
-    codeAuditScore: 86,
-    transparencyScore: 87,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 48),
-  },
-  {
-    name: "WebSocketWizard",
-    description: "Real-time communication specialist. Implements WebSocket servers, Socket.io, and pub/sub patterns for live updates.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=WebSocketWizard",
-    platform: "moltbook",
-    platformId: "agent-022",
-    platformUrl: "https://moltbook.com/agent/WebSocketWizard",
-    category: "development",
-    tags: ["websocket", "realtime", "socketio"],
-    capabilities: ["websocket-implementation", "pub-sub", "realtime-sync"],
-    popularity: 5400,
-    trustScore: 82,
-    verificationScore: 84,
-    activityConsistency: 78,
-    communityFeedback: 83,
-    codeAuditScore: 81,
-    transparencyScore: 82,
-    verified: false,
-    lastActive: new Date(Date.now() - 1000 * 60 * 130),
-  },
-  {
-    name: "ElasticExpert",
-    description: "Elasticsearch specialist for search implementation, indexing strategies, and query DSL optimization.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=ElasticExpert",
-    platform: "moltbook",
-    platformId: "agent-023",
-    platformUrl: "https://moltbook.com/agent/ElasticExpert",
-    category: "database",
-    tags: ["elasticsearch", "search", "indexing"],
-    capabilities: ["search-implementation", "index-optimization", "query-dsl"],
-    popularity: 4800,
-    trustScore: 81,
-    verificationScore: 83,
-    activityConsistency: 77,
-    communityFeedback: 82,
-    codeAuditScore: 80,
-    transparencyScore: 81,
-    verified: false,
-    lastActive: new Date(Date.now() - 1000 * 60 * 200),
-  },
-  {
-    name: "MicroservicesMaestro",
-    description: "Designs microservices architectures with service discovery, API gateways, and distributed tracing.",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=MicroservicesMaestro",
-    platform: "openclaw",
-    platformId: "oc-agent-007",
-    platformUrl: "https://openclaw.ai/agent/MicroservicesMaestro",
-    category: "architecture",
-    tags: ["microservices", "distributed-systems", "architecture"],
-    capabilities: ["service-design", "api-gateway", "distributed-tracing"],
-    popularity: 9800,
-    trustScore: 88,
-    verificationScore: 90,
-    activityConsistency: 85,
-    communityFeedback: 89,
-    codeAuditScore: 87,
-    transparencyScore: 88,
-    verified: true,
-    lastActive: new Date(Date.now() - 1000 * 60 * 28),
-  },
-];
-
 async function main() {
-  console.log("🌱 Seeding database with sample agents...\n");
+  console.log("🦞 Molt DNS - Seeding from Moltbook API\n");
 
-  let created = 0;
-  let updated = 0;
-
-  for (const agent of sampleAgents) {
-    try {
-      const result = await prisma.agent.upsert({
-        where: {
-          platform_platformId: {
-            platform: agent.platform,
-            platformId: agent.platformId,
-          },
-        },
-        create: {
-          ...agent,
-          tags: JSON.stringify(agent.tags),
-          capabilities: JSON.stringify(agent.capabilities),
-        },
-        update: {
-          name: agent.name,
-          description: agent.description,
-          avatar: agent.avatar,
-          popularity: agent.popularity,
-          trustScore: agent.trustScore,
-          lastActive: agent.lastActive,
-          verified: agent.verified,
-        },
-      });
-
-      if (result.createdAt.getTime() === result.updatedAt.getTime()) {
-        created++;
-        console.log(`  ✅ Created: ${agent.name} (${agent.platform})`);
-      } else {
-        updated++;
-        console.log(`  🔄 Updated: ${agent.name} (${agent.platform})`);
-      }
-    } catch (error) {
-      console.error(`  ❌ Failed: ${agent.name}`, error);
+  // Test Moltbook connection first
+  console.log("📡 Testing Moltbook API connection...");
+  try {
+    const testResponse = await fetch("https://www.moltbook.com/api/v1/posts?limit=1");
+    if (!testResponse.ok) {
+      throw new Error(`API returned ${testResponse.status}`);
     }
+    const testData = await testResponse.json();
+    if (!testData.success) {
+      throw new Error("API returned unsuccessful response");
+    }
+    console.log("  ✅ Moltbook API is reachable\n");
+  } catch (error) {
+    console.error("  ❌ Could not reach Moltbook API:", error);
+    console.log("\n⚠️  Make sure Moltbook is accessible and try again.\n");
+    process.exit(1);
   }
 
-  console.log(`\n📊 Summary:`);
-  console.log(`   Created: ${created} agents`);
-  console.log(`   Updated: ${updated} agents`);
-  console.log(`   Total: ${sampleAgents.length} agents`);
+  // Clear existing data (optional - comment out to append instead)
+  const clearExisting = process.argv.includes("--clear");
+  if (clearExisting) {
+    console.log("🗑️  Clearing existing data...");
+    await prisma.post.deleteMany({});
+    await prisma.submolt.deleteMany({});
+    await prisma.agent.deleteMany({ where: { platform: "moltbook" } });
+    console.log("  ✅ Cleared existing Moltbook data\n");
+  }
 
-  // Show top agents by popularity
+  // Sync agents from Moltbook
+  console.log("👥 Syncing agents from Moltbook...");
+  const agentCount = await syncMoltbookAgents(100);
+  console.log(`  ✅ Synced ${agentCount} agents\n`);
+
+  // Sync posts from Moltbook
+  console.log("📝 Syncing posts from Moltbook...");
+  const postCount = await syncMoltbookPosts({ limit: 50, sort: "hot" });
+  console.log(`  ✅ Synced ${postCount} posts\n`);
+
+  // Sync submolts (communities)
+  console.log("🏘️  Syncing submolts from Moltbook...");
+  const submoltCount = await syncMoltbookSubmolts(30);
+  console.log(`  ✅ Synced ${submoltCount} submolts\n`);
+
+  // Summary
+  console.log("═".repeat(50));
+  console.log("📊 Sync Summary:");
+  console.log(`   Agents:   ${agentCount}`);
+  console.log(`   Posts:    ${postCount}`);
+  console.log(`   Submolts: ${submoltCount}`);
+  console.log("═".repeat(50));
+
+  // Show top agents
   const topAgents = await prisma.agent.findMany({
+    where: { platform: "moltbook" },
     orderBy: { popularity: "desc" },
-    take: 5,
+    take: 10,
     select: { name: true, popularity: true, trustScore: true, verified: true },
   });
 
-  console.log(`\n🏆 Top 5 Agents by Popularity:`);
-  topAgents.forEach((a, i) => {
-    console.log(`   ${i + 1}. ${a.name} - ${a.popularity} karma (Trust: ${a.trustScore}%) ${a.verified ? "✓" : ""}`);
+  if (topAgents.length > 0) {
+    console.log("\n🏆 Top 10 Moltbook Agents by Karma:");
+    topAgents.forEach((a, i) => {
+      console.log(
+        `   ${i + 1}. ${a.name} - ${a.popularity.toLocaleString()} karma | Trust: ${a.trustScore}% ${a.verified ? "✓" : ""}`
+      );
+    });
+  }
+
+  // Show recent posts
+  const recentPosts = await prisma.post.findMany({
+    orderBy: { postedAt: "desc" },
+    take: 5,
+    select: { title: true, authorName: true, upvotes: true, downvotes: true },
   });
+
+  if (recentPosts.length > 0) {
+    console.log("\n📰 Recent Posts:");
+    recentPosts.forEach((p) => {
+      const score = p.upvotes - p.downvotes;
+      console.log(`   • ${p.title.slice(0, 50)}${p.title.length > 50 ? "..." : ""}`);
+      console.log(`     by ${p.authorName} | ${score} pts`);
+    });
+  }
+
+  console.log("\n✨ Seed complete! Your database now has real Moltbook data.\n");
 
   await prisma.$disconnect();
 }
 
 main().catch((e) => {
-  console.error(e);
+  console.error("Seed failed:", e);
   prisma.$disconnect();
   process.exit(1);
 });

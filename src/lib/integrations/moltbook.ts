@@ -66,8 +66,10 @@ export interface MoltbookSubmolt {
   display_name?: string;
   description: string;
   subscriber_count: number;
-  post_count: number;
   created_at: string;
+  last_activity_at?: string;
+  featured_at?: string | null;
+  created_by?: string | null;
 }
 
 export interface MoltbookApiResponse<T> {
@@ -128,22 +130,70 @@ class MoltbookClient {
   }
 
   /**
-   * Get list of agents from Moltbook
+   * Extract unique agents from posts
+   * The Moltbook API doesn't have a dedicated agents endpoint,
+   * so we extract agents from post authors
    */
-  async getAgents(options: {
-    sort?: "karma" | "newest" | "active";
+  async getAgentsFromPosts(options: {
     limit?: number;
-    offset?: number;
-  } = {}): Promise<MoltbookApiResponse<MoltbookAgent[]>> {
-    const params = new URLSearchParams({
-      sort: options.sort || "karma",
-      limit: String(options.limit || 50),
-      offset: String(options.offset || 0),
-    });
+  } = {}): Promise<{ agents: MoltbookAgent[]; postCount: number }> {
+    const postLimit = Math.min(options.limit || 100, 200);
+    const allPosts: MoltbookPost[] = [];
+    let offset = 0;
+    const batchSize = 50;
 
-    return this.fetch<MoltbookApiResponse<MoltbookAgent[]>>(
-      `/agents?${params.toString()}`
-    );
+    // Fetch posts in batches to get more authors
+    while (allPosts.length < postLimit) {
+      const response = await this.getPosts({
+        sort: "new",
+        limit: batchSize,
+        offset,
+      });
+      allPosts.push(...response.posts);
+      if (!response.has_more || response.posts.length === 0) break;
+      offset += batchSize;
+    }
+
+    // Extract unique agents from post authors
+    const agentMap = new Map<string, MoltbookAgent>();
+
+    for (const post of allPosts) {
+      const authorId = post.author.id;
+      if (!agentMap.has(authorId)) {
+        // Create agent from post author data
+        agentMap.set(authorId, {
+          id: authorId,
+          name: post.author.name,
+          description: `Agent on Moltbook`,
+          avatar_url: post.author.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(post.author.name)}`,
+          created_at: post.created_at,
+          karma: post.upvotes - post.downvotes,
+          post_count: 1,
+          comment_count: 0,
+          submolts: [post.submolt.name],
+          is_verified: false,
+          last_active: post.created_at,
+          capabilities: [],
+        });
+      } else {
+        // Update existing agent's stats
+        const agent = agentMap.get(authorId)!;
+        agent.karma += post.upvotes - post.downvotes;
+        agent.post_count += 1;
+        if (!agent.submolts.includes(post.submolt.name)) {
+          agent.submolts.push(post.submolt.name);
+        }
+        // Update last_active if this post is newer
+        if (new Date(post.created_at) > new Date(agent.last_active)) {
+          agent.last_active = post.created_at;
+        }
+      }
+    }
+
+    return {
+      agents: Array.from(agentMap.values()).sort((a, b) => b.karma - a.karma),
+      postCount: allPosts.length,
+    };
   }
 
   /**
@@ -178,10 +228,10 @@ class MoltbookClient {
    * Get top submolts (communities)
    */
   async getSubmolts(limit = 20): Promise<MoltbookSubmolt[]> {
-    const response = await this.fetch<MoltbookApiResponse<MoltbookSubmolt[]>>(
+    const response = await this.fetch<{ success: boolean; submolts: MoltbookSubmolt[] }>(
       `/submolts?limit=${limit}&sort=subscribers`
     );
-    return response.data ?? [];
+    return response.submolts ?? [];
   }
 
   /**

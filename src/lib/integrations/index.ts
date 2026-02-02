@@ -27,14 +27,15 @@ import { calculateTrustScore, TrustBreakdown } from "../trust-algorithm";
 
 /**
  * Fetch and sync agents from Moltbook
+ * Extracts agents from posts since there's no dedicated agents endpoint
  */
 export async function syncMoltbookAgents(limit = 100): Promise<number> {
-  console.log("Syncing Moltbook agents...");
+  console.log("Syncing Moltbook agents (from posts)...");
   let synced = 0;
 
   try {
-    const response = await moltbookClient.getAgents({ limit, sort: "karma" });
-    const agents = response.data ?? [];
+    const { agents, postCount } = await moltbookClient.getAgentsFromPosts({ limit: limit * 2 });
+    console.log(`  Found ${agents.length} unique agents from ${postCount} posts`);
 
     for (const moltAgent of agents) {
       try {
@@ -44,9 +45,9 @@ export async function syncMoltbookAgents(limit = 100): Promise<number> {
         const breakdown: TrustBreakdown = {
           verificationScore: moltAgent.is_verified ? 90 : 40,
           activityConsistency: calculateActivityScore(moltAgent.last_active),
-          communityFeedback: Math.min(100, 30 + Math.log10(moltAgent.karma + 1) * 15),
+          communityFeedback: Math.min(100, 30 + Math.log10(Math.abs(moltAgent.karma) + 1) * 15),
           codeAuditScore: moltAgent.is_verified ? 60 : 25,
-          transparencyScore: moltAgent.description.length > 100 ? 70 : 40,
+          transparencyScore: moltAgent.post_count > 5 ? 70 : 40,
         };
 
         const trustScore = calculateTrustScore(breakdown);
@@ -85,8 +86,26 @@ export async function syncMoltbookAgents(limit = 100): Promise<number> {
         console.error(`Failed to sync Moltbook agent ${moltAgent.name}:`, error);
       }
     }
+
+    // Log the sync
+    await prisma.syncLog.create({
+      data: {
+        platform: "moltbook",
+        type: "agents",
+        status: "success",
+        count: synced,
+      },
+    });
   } catch (error) {
     console.error("Moltbook sync error:", error);
+    await prisma.syncLog.create({
+      data: {
+        platform: "moltbook",
+        type: "agents",
+        status: "failed",
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+    });
   }
 
   console.log(`Synced ${synced} agents from Moltbook`);
@@ -303,13 +322,11 @@ export async function syncMoltbookSubmolts(limit = 50): Promise<number> {
             displayName: submolt.display_name,
             description: submolt.description,
             subscriberCount: submolt.subscriber_count,
-            postCount: submolt.post_count,
           },
           update: {
             displayName: submolt.display_name,
             description: submolt.description,
             subscriberCount: submolt.subscriber_count,
-            postCount: submolt.post_count,
           },
         });
         synced++;

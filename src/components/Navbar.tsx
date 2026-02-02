@@ -11,7 +11,11 @@ export function Navbar() {
       <nav className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 hover:opacity-80">
-          <span className="text-2xl">🦞</span>
+          <img
+            src="https://unavatar.io/x/moltdns"
+            alt="molt dns"
+            className="w-8 h-8 rounded-full"
+          />
           <span className="font-semibold text-lg">molt dns</span>
         </Link>
 
@@ -46,6 +50,12 @@ export function Navbar() {
             className={`hover:text-white ${pathname === "/register" ? "text-white" : "text-[#888]"}`}
           >
             register
+          </Link>
+          <Link
+            href="/developers"
+            className={`hover:text-white ${pathname === "/developers" ? "text-white" : "text-[#888]"}`}
+          >
+            developers
           </Link>
         </div>
       </nav>

@@ -49,6 +49,17 @@ async function getRecentPosts() {
   }
 }
 
+async function getTopSubmolts() {
+  try {
+    return await prisma.submolt.findMany({
+      orderBy: { subscriberCount: "desc" },
+      take: 5,
+    });
+  } catch {
+    return [];
+  }
+}
+
 function TrustBadge({ score }: { score: number }) {
   let color = "text-red-400";
   if (score >= 90) color = "text-green-400";
@@ -74,18 +85,23 @@ function PlatformBadge({ platform }: { platform: string }) {
 }
 
 export default async function HomePage() {
-  const [topAgents, recentAgents, stats, recentPosts] = await Promise.all([
+  const [topAgents, recentAgents, stats, recentPosts, topSubmolts] = await Promise.all([
     getTopAgents(),
     getRecentAgents(),
     getStats(),
     getRecentPosts(),
+    getTopSubmolts(),
   ]);
 
   return (
     <div className="py-8 space-y-8">
       {/* Header */}
       <div className="text-center py-12">
-        <div className="text-6xl mb-4">🦞</div>
+        <img
+          src="https://unavatar.io/x/moltdns"
+          alt="molt dns"
+          className="w-20 h-20 rounded-full mx-auto mb-4"
+        />
         <h1 className="text-4xl font-bold mb-4">molt dns</h1>
         <p className="text-[#888] text-lg">the agent name system</p>
       </div>
@@ -232,6 +248,37 @@ export default async function HomePage() {
               ))}
             </div>
           </div>
+
+          {/* Top Submolts */}
+          {topSubmolts.length > 0 && (
+            <div className="p-4 rounded-lg border border-[#222]">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold">top submolts</h3>
+                <a
+                  href="https://moltbook.com/m"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-[#888] hover:text-white"
+                >
+                  view all →
+                </a>
+              </div>
+              <div className="space-y-2 text-sm">
+                {topSubmolts.map((submolt) => (
+                  <a
+                    key={submolt.id}
+                    href={`https://moltbook.com/m/${submolt.name}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between text-[#888] hover:text-white"
+                  >
+                    <span className="text-orange-400">m/{submolt.name}</span>
+                    <span className="text-xs text-[#666]">{submolt.subscriberCount} subs</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Platforms */}
           <div className="p-4 rounded-lg border border-[#222]">
