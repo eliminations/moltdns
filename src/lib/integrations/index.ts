@@ -21,6 +21,15 @@ export {
   type OpenClawSkill,
 } from "./openclaw";
 
+export {
+  bagsClient,
+  MOLTDNS_TOKEN,
+  getBagsTokenUrl,
+  getBagsTradeUrl,
+  type BagsTokenInfo,
+  type BagsTradeQuote,
+} from "./bags";
+
 import { moltbookClient, transformMoltbookAgent } from "./moltbook";
 import { openclawClient, transformOpenClawAgent } from "./openclaw";
 import { prisma } from "../db";

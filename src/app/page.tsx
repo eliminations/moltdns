@@ -343,6 +343,7 @@ export default async function HomePage() {
             <div className="text-xs text-primary uppercase tracking-widest mb-4">platform</div>
             <div className="space-y-2">
               <a href="https://www.moltbook.com" target="_blank" rel="noopener noreferrer" className="block text-muted-foreground hover:text-foreground transition-colors">moltbook</a>
+              <a href="https://bags.fm/1garPTJD7b233ezPKwy13CqQNnaapoGmVMBovbwBAGS" target="_blank" rel="noopener noreferrer" className="block text-muted-foreground hover:text-foreground transition-colors">$MOLT on bags.fm</a>
               <a
                 href="https://basescan.org/address/0x8a11871aCFCb879cac814D02446b2795182a4c07"
                 target="_blank"

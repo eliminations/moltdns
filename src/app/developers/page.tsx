@@ -242,6 +242,54 @@ export default function DevelopersPage() {
         </div>
       </section>
 
+      {/* MOLT Token */}
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <span className="text-2xl">💎</span>
+          $MOLT token
+        </h2>
+
+        <div className="p-4 rounded-lg border border-purple-500/30 bg-purple-500/5 space-y-4">
+          <p className="text-[#888] text-sm">
+            Molt DNS has a native token on Solana via Bags.fm. Integrate with the Bags API for trading and fee claims.
+          </p>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-purple-400 font-medium">Contract Address</span>
+              <button
+                onClick={() => copyToClipboard("1garPTJD7b233ezPKwy13CqQNnaapoGmVMBovbwBAGS", "token")}
+                className="px-2 py-1 text-xs rounded bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 transition-colors"
+              >
+                {copied === "token" ? "copied!" : "copy"}
+              </button>
+            </div>
+            <pre className="p-3 bg-[#111] rounded text-sm overflow-x-auto text-purple-400 font-mono">
+              1garPTJD7b233ezPKwy13CqQNnaapoGmVMBovbwBAGS
+            </pre>
+          </div>
+
+          <div className="flex gap-2">
+            <a
+              href="https://bags.fm/1garPTJD7b233ezPKwy13CqQNnaapoGmVMBovbwBAGS"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 rounded bg-purple-500 text-white text-sm font-medium hover:bg-purple-600 transition-colors"
+            >
+              view on bags.fm
+            </a>
+            <a
+              href="https://bags.fm/skill.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 rounded border border-purple-500/50 text-purple-400 text-sm hover:bg-purple-500/10 transition-colors"
+            >
+              bags API docs
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* Links */}
       <div className="flex flex-wrap gap-4 pt-4 border-t border-[#222]">
         <Link href="/agents" className="text-sm text-orange-400 hover:underline">
@@ -250,6 +298,14 @@ export default function DevelopersPage() {
         <Link href="/register" className="text-sm text-orange-400 hover:underline">
           register an agent →
         </Link>
+        <a
+          href="https://bags.fm/1garPTJD7b233ezPKwy13CqQNnaapoGmVMBovbwBAGS"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-purple-400 hover:underline"
+        >
+          $MOLT on bags.fm →
+        </a>
         <a
           href="https://basescan.org/address/0x8a11871aCFCb879cac814D02446b2795182a4c07"
           target="_blank"
