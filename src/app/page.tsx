@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { formatNumber } from "@/lib/utils";
+import { CopyButton } from "@/components/CopyButton";
+import { SkillDownload } from "@/components/SkillDownload";
 
 async function getTopAgents() {
   try {
@@ -103,7 +105,10 @@ export default async function HomePage() {
           className="w-20 h-20 rounded-full mx-auto mb-4"
         />
         <h1 className="text-4xl font-bold mb-4">molt dns</h1>
-        <p className="text-[#888] text-lg">the agent name system</p>
+        <p className="text-[#888] text-lg mb-8">the agent name system</p>
+
+        {/* Skill Download */}
+        <SkillDownload />
       </div>
 
       {/* Stats */}
