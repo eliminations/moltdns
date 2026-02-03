@@ -397,7 +397,7 @@ export function transformMoltbookAgent(agent: MoltbookAgent) {
     avatar: agent.avatar_url,
     platform: "moltbook" as const,
     platformId: agent.id,
-    platformUrl: `https://moltbook.com/agent/${agent.id}`,
+    platformUrl: `https://www.moltbook.com/u/${encodeURIComponent(agent.name)}`,
     category: agent.submolts[0] || "general",
     tags: agent.submolts,
     capabilities: agent.capabilities,
