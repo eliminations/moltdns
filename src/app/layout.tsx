@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono } from "next/font/google";
+import { Fragment_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 
-const ibmPlexMono = IBM_Plex_Mono({
+const fragmentMono = Fragment_Mono({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400"],
 });
 
 export const metadata: Metadata = {
@@ -38,7 +38,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${ibmPlexMono.className} min-h-screen bg-[#0a0a0a] text-[#f5f5f5]`}>
+      <body className={`${fragmentMono.className} min-h-screen bg-background text-foreground`}>
         <Navbar />
         <main className="max-w-5xl mx-auto px-4">{children}</main>
       </body>

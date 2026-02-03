@@ -20,7 +20,6 @@ Read the full skill documentation at: https://moltdns.com/skill.md`;
 
 export function SkillDownload() {
   const [copied, setCopied] = useState<string | null>(null);
-  const [showAgentPrompt, setShowAgentPrompt] = useState(false);
 
   const copyToClipboard = async (text: string, label: string) => {
     await navigator.clipboard.writeText(text);
@@ -29,71 +28,43 @@ export function SkillDownload() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
-      {/* Curl Download */}
-      <div className="p-4 rounded-lg border border-orange-500/30 bg-orange-500/5">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-sm text-orange-400 font-medium">download skill.md for your agent</span>
-          <button
-            onClick={() => copyToClipboard(SKILL_CURL, "curl")}
-            className="px-3 py-1.5 text-xs rounded bg-orange-500 text-white hover:bg-orange-600 transition-colors font-medium"
-          >
-            {copied === "curl" ? "copied!" : "copy"}
-          </button>
-        </div>
-        <pre className="p-3 bg-[#0a0a0a] rounded text-sm overflow-x-auto text-orange-400 border border-[#333]">
+    <div className="p-5 rounded-lg border border-orange-500/30 bg-card space-y-4">
+      <span className="text-sm text-orange-400">download skill.md for your agent</span>
+
+      {/* Curl command */}
+      <div className="flex items-center gap-2">
+        <pre className="flex-1 p-3 bg-secondary rounded text-sm overflow-x-auto text-foreground border border-border">
           {SKILL_CURL}
         </pre>
-      </div>
-
-      {/* Agent Prompt Dropdown */}
-      <div className="rounded-lg border border-[#222]">
         <button
-          onClick={() => setShowAgentPrompt(!showAgentPrompt)}
-          className="w-full p-4 flex items-center justify-between text-left hover:bg-[#111] transition-colors rounded-lg"
+          onClick={() => copyToClipboard(SKILL_CURL, "curl")}
+          className="px-3 py-2.5 text-xs rounded border border-border text-foreground hover:bg-secondary transition-colors font-medium uppercase tracking-wider shrink-0"
         >
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🤖</span>
-            <span className="text-sm font-medium">agent system prompt</span>
-          </div>
-          <span className={`text-[#666] transition-transform ${showAgentPrompt ? "rotate-180" : ""}`}>
-            ▼
-          </span>
+          {copied === "curl" ? "copied!" : "copy"}
         </button>
-
-        {showAgentPrompt && (
-          <div className="p-4 border-t border-[#222] space-y-3">
-            <p className="text-xs text-[#888]">
-              Add this to your agent&apos;s system prompt to enable agent discovery.
-            </p>
-            <div className="flex justify-end">
-              <button
-                onClick={() => copyToClipboard(AGENT_PROMPT, "prompt")}
-                className="px-2 py-1 text-xs rounded bg-[#222] hover:bg-[#333] transition-colors"
-              >
-                {copied === "prompt" ? "copied!" : "copy prompt"}
-              </button>
-            </div>
-            <pre className="p-3 bg-[#111] rounded text-xs overflow-x-auto text-green-400 whitespace-pre-wrap max-h-48 overflow-y-auto">
-              {AGENT_PROMPT}
-            </pre>
-          </div>
-        )}
       </div>
 
       {/* Links */}
-      <div className="flex justify-center gap-4 text-sm">
-        <Link href="/developers" className="text-orange-400 hover:underline">
-          full docs →
+      <div className="flex items-center gap-0 text-xs uppercase tracking-wider">
+        <Link href="/developers" className="text-muted-foreground hover:text-foreground transition-colors">
+          view docs
         </Link>
+        <span className="mx-3 text-border">|</span>
         <a
           href="/skill.md"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[#888] hover:text-white"
+          className="text-muted-foreground hover:text-foreground transition-colors"
         >
-          view skill.md
+          skill.md
         </a>
+        <span className="mx-3 text-border">|</span>
+        <button
+          onClick={() => copyToClipboard(AGENT_PROMPT, "prompt")}
+          className="text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {copied === "prompt" ? "copied!" : "agent discovery prompt"}
+        </button>
       </div>
     </div>
   );

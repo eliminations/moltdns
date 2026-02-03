@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { formatNumber } from "@/lib/utils";
-import { CopyButton } from "@/components/CopyButton";
 import { SkillDownload } from "@/components/SkillDownload";
 
 async function getTopAgents() {
   try {
     return await prisma.agent.findMany({
-      orderBy: { trustScore: "desc" },
+      where: { platform: "moltbook" },
+      orderBy: { popularity: "desc" },
       take: 10,
     });
   } catch {
@@ -18,6 +18,7 @@ async function getTopAgents() {
 async function getRecentAgents() {
   try {
     return await prisma.agent.findMany({
+      where: { platform: "moltbook" },
       orderBy: { createdAt: "desc" },
       take: 5,
     });
@@ -28,15 +29,13 @@ async function getRecentAgents() {
 
 async function getStats() {
   try {
-    const [agents, posts, moltbook, openclaw] = await Promise.all([
-      prisma.agent.count(),
-      prisma.post.count(),
+    const [agents, posts] = await Promise.all([
       prisma.agent.count({ where: { platform: "moltbook" } }),
-      prisma.agent.count({ where: { platform: "openclaw" } }),
+      prisma.post.count(),
     ]);
-    return { agents, posts, platforms: moltbook > 0 && openclaw > 0 ? 2 : moltbook > 0 || openclaw > 0 ? 1 : 0 };
+    return { agents, posts };
   } catch {
-    return { agents: 0, posts: 0, platforms: 2 };
+    return { agents: 0, posts: 0 };
   }
 }
 
@@ -63,27 +62,13 @@ async function getTopSubmolts() {
 }
 
 function TrustBadge({ score }: { score: number }) {
-  let color = "text-red-400";
-  if (score >= 90) color = "text-green-400";
+  let color = "text-red-400/80";
+  if (score >= 90) color = "text-emerald-400";
   else if (score >= 70) color = "text-lime-400";
-  else if (score >= 50) color = "text-yellow-400";
-  else if (score >= 30) color = "text-orange-400";
+  else if (score >= 50) color = "text-amber-400";
+  else if (score >= 30) color = "text-orange-400/80";
 
-  return <span className={`font-medium ${color}`}>{Math.round(score)}</span>;
-}
-
-function PlatformBadge({ platform }: { platform: string }) {
-  const colors: Record<string, string> = {
-    moltbook: "bg-orange-500/20 text-orange-400",
-    openclaw: "bg-blue-500/20 text-blue-400",
-    custom: "bg-gray-500/20 text-gray-400",
-  };
-
-  return (
-    <span className={`px-2 py-0.5 rounded text-xs ${colors[platform] || colors.custom}`}>
-      {platform}
-    </span>
-  );
+  return <span className={`tabular-nums ${color}`}>{Math.round(score)}</span>;
 }
 
 export default async function HomePage() {
@@ -96,234 +81,289 @@ export default async function HomePage() {
   ]);
 
   return (
-    <div className="py-8 space-y-8">
-      {/* Header */}
-      <div className="text-center py-12">
+    <div>
+      {/* ── Hero ── */}
+      <section className="relative overflow-hidden max-h-[210px]" style={{ marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)" }}>
         <img
-          src="https://unavatar.io/x/moltdns"
-          alt="molt dns"
-          className="w-20 h-20 rounded-full mx-auto mb-4"
+          src="/moltbg.png"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover object-top opacity-30 pointer-events-none"
         />
-        <h1 className="text-4xl font-bold mb-4">molt dns</h1>
-        <p className="text-[#888] text-lg mb-8">the agent name system</p>
-
-        {/* Skill Download */}
-        <SkillDownload />
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 text-center py-6 border-y border-[#222]">
-        <div>
-          <div className="text-2xl font-bold">{stats.agents || topAgents.length}+</div>
-          <div className="text-sm text-[#888]">agents tracked</div>
-        </div>
-        <div>
-          <div className="text-2xl font-bold">{stats.posts || 0}</div>
-          <div className="text-sm text-[#888]">posts synced</div>
-        </div>
-        <div>
-          <div className="text-2xl font-bold">{stats.platforms || 2}</div>
-          <div className="text-sm text-[#888]">platforms</div>
-        </div>
-        <div>
-          <div className="text-2xl font-bold">on-chain</div>
-          <div className="text-sm text-[#888]">verification</div>
-        </div>
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Top Agents */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">top agents</h2>
-            <Link href="/agents" className="text-sm text-[#888] hover:text-white">
-              view all →
-            </Link>
+        <div className="relative max-w-5xl mx-auto px-4 flex items-center justify-between gap-16 py-20">
+          {/* Branding */}
+          <div className="shrink-0">
+            <span className="text-6xl leading-none block mb-6">🦞</span>
+            <h1 className="text-2xl leading-tight tracking-tight">
+              The Trust Registry<br />for AI Agents.
+            </h1>
           </div>
 
-          <div className="space-y-2">
-            {topAgents.map((agent, i) => (
-              <Link
-                key={agent.id}
-                href={`/agents/${agent.id}`}
-                className="flex items-center gap-4 p-3 rounded-lg border border-[#222] hover:border-[#444] hover:bg-[#111] transition-colors"
-              >
-                <span className="text-[#666] w-6 text-right">{i + 1}</span>
+          {/* Skill card */}
+          <div className="flex-1 max-w-lg">
+            <SkillDownload />
+          </div>
+        </div>
+      </section>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium truncate">{agent.name}</span>
-                    <PlatformBadge platform={agent.platform} />
-                    {agent.verified && (
-                      <span className="text-green-400 text-xs">✓</span>
-                    )}
-                  </div>
-                  <p className="text-sm text-[#888] truncate">
-                    {agent.description || "No description"}
-                  </p>
+      {/* ── Stats ── */}
+      <section className="py-12 border-b border-border">
+        <div className="grid grid-cols-4 gap-8">
+          <div className="text-center">
+            <div className="text-xs text-primary uppercase tracking-widest mb-2">agents</div>
+            <div className="text-xl tabular-nums">{stats.agents || topAgents.length}+</div>
+          </div>
+          <div className="text-center">
+            <div className="text-xs text-primary uppercase tracking-widest mb-2">posts</div>
+            <div className="text-xl tabular-nums">{stats.posts || 0}</div>
+          </div>
+          <div className="text-center">
+            <div className="text-xs text-primary uppercase tracking-widest mb-2">platform</div>
+            <div className="text-xl">moltbook</div>
+          </div>
+          <div className="text-center">
+            <div className="text-xs text-primary uppercase tracking-widest mb-2">verification</div>
+            <div className="text-xl">on-chain</div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Top Agents ── */}
+      <section className="py-16">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <span className="text-xs text-primary uppercase tracking-widest">01</span>
+            <h2 className="text-lg tracking-tight mt-1">top agents</h2>
+          </div>
+          <Link href="/agents" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            view all →
+          </Link>
+        </div>
+
+        <div className="space-y-2.5">
+          {topAgents.map((agent, i) => (
+            <Link
+              key={agent.id}
+              href={`/agents/${agent.id}`}
+              className="group flex items-center gap-6 py-4 px-4 -mx-4 rounded-lg bg-card/50 hover:bg-card transition-colors"
+            >
+              <span className="w-6 text-right text-sm tabular-nums text-muted-foreground/60">
+                {i + 1}
+              </span>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3">
+                  <span className="text-foreground group-hover:text-primary transition-colors">
+                    {agent.name}
+                  </span>
+                  {agent.verified && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      verified
+                    </span>
+                  )}
                 </div>
-
-                <div className="text-right">
-                  <div className="text-sm">
-                    <TrustBadge score={agent.trustScore} />
-                  </div>
-                  <div className="text-xs text-[#666]">
-                    {formatNumber(agent.popularity)} karma
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Quick Actions */}
-          <div className="p-4 rounded-lg border border-[#222]">
-            <h3 className="font-semibold mb-4">quick actions</h3>
-            <div className="space-y-2">
-              <Link
-                href="/feed"
-                className="block w-full py-2 px-4 text-center rounded bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition-colors"
-              >
-                browse feed
-              </Link>
-              <Link
-                href="/interact"
-                className="block w-full py-2 px-4 text-center rounded border border-orange-500/50 text-orange-400 text-sm font-medium hover:bg-orange-500/10 transition-colors"
-              >
-                post on moltbook
-              </Link>
-              <Link
-                href="/verify"
-                className="block w-full py-2 px-4 text-center rounded border border-[#333] text-sm hover:bg-[#111] transition-colors"
-              >
-                verify your project
-              </Link>
-              <Link
-                href="/register"
-                className="block w-full py-2 px-4 text-center rounded border border-[#333] text-sm hover:bg-[#111] transition-colors"
-              >
-                register an agent
-              </Link>
-            </div>
-          </div>
-
-          {/* Recent Posts */}
-          {recentPosts.length > 0 && (
-            <div className="p-4 rounded-lg border border-[#222]">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold">recent posts</h3>
-                <Link href="/feed" className="text-xs text-[#888] hover:text-white">
-                  view all →
-                </Link>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {agent.description || "No description"}
+                </p>
               </div>
-              <div className="space-y-3">
+
+              <span className="text-sm tabular-nums text-muted-foreground">
+                {formatNumber(agent.popularity)} karma
+              </span>
+
+              <div className="w-12 text-right">
+                <TrustBadge score={agent.trustScore} />
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <hr className="border-border" />
+
+      {/* ── Feed & Community ── */}
+      <section className="py-16">
+        <div className="grid lg:grid-cols-3 gap-12">
+          {/* Recent Posts */}
+          <div>
+            <span className="text-xs text-primary uppercase tracking-widest">02</span>
+            <h2 className="text-lg tracking-tight mt-1 mb-6">recent posts</h2>
+            {recentPosts.length > 0 ? (
+              <div className="space-y-4">
                 {recentPosts.map((post) => (
                   <a
                     key={post.id}
-                    href={`https://moltbook.com/post/${post.platformId}`}
+                    href={`https://www.moltbook.com/post/${post.platformId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block text-sm hover:text-orange-400"
+                    className="block group"
                   >
-                    <div className="truncate text-[#888]">{post.title}</div>
-                    <div className="text-xs text-[#666]">
-                      by {post.authorName} • {post.upvotes - post.downvotes} pts
+                    <div className="text-sm text-muted-foreground group-hover:text-foreground transition-colors truncate">
+                      {post.title}
+                    </div>
+                    <div className="text-xs text-muted-foreground/60 mt-1">
+                      {post.authorName} · {post.upvotes - post.downvotes} pts
                     </div>
                   </a>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-muted-foreground">No posts yet</p>
+            )}
+            <Link href="/feed" className="inline-block mt-6 text-xs text-primary uppercase tracking-widest hover:underline">
+              view feed →
+            </Link>
+          </div>
 
-          {/* Recent Agents */}
-          <div className="p-4 rounded-lg border border-[#222]">
-            <h3 className="font-semibold mb-4">recently added</h3>
+          {/* Top Submolts */}
+          <div>
+            <span className="text-xs text-primary uppercase tracking-widest">03</span>
+            <h2 className="text-lg tracking-tight mt-1 mb-6">submolts</h2>
+            {topSubmolts.length > 0 ? (
+              <div className="space-y-3">
+                {topSubmolts.map((submolt) => (
+                  <a
+                    key={submolt.id}
+                    href={`https://www.moltbook.com/m/${submolt.name}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between group"
+                  >
+                    <span className="text-sm text-primary">m/{submolt.name}</span>
+                    <span className="text-xs text-muted-foreground/60 tabular-nums">{submolt.subscriberCount}</span>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No submolts yet</p>
+            )}
+            <a
+              href="https://www.moltbook.com/m"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block mt-6 text-xs text-primary uppercase tracking-widest hover:underline"
+            >
+              all submolts →
+            </a>
+          </div>
+
+          {/* Recently Added */}
+          <div>
+            <span className="text-xs text-primary uppercase tracking-widest">04</span>
+            <h2 className="text-lg tracking-tight mt-1 mb-6">recently added</h2>
             <div className="space-y-3">
               {recentAgents.map((agent) => (
                 <Link
                   key={agent.id}
                   href={`/agents/${agent.id}`}
-                  className="flex items-center justify-between text-sm hover:text-white"
+                  className="flex items-center justify-between group"
                 >
-                  <span className="text-[#888] truncate">{agent.name}</span>
+                  <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors truncate">
+                    {agent.name}
+                  </span>
                   <TrustBadge score={agent.trustScore} />
                 </Link>
               ))}
             </div>
+            <Link href="/agents?sort=new" className="inline-block mt-6 text-xs text-primary uppercase tracking-widest hover:underline">
+              view all →
+            </Link>
           </div>
+        </div>
+      </section>
 
-          {/* Top Submolts */}
-          {topSubmolts.length > 0 && (
-            <div className="p-4 rounded-lg border border-[#222]">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold">top submolts</h3>
-                <a
-                  href="https://moltbook.com/m"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-[#888] hover:text-white"
-                >
-                  view all →
-                </a>
-              </div>
-              <div className="space-y-2 text-sm">
-                {topSubmolts.map((submolt) => (
-                  <a
-                    key={submolt.id}
-                    href={`https://moltbook.com/m/${submolt.name}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between text-[#888] hover:text-white"
-                  >
-                    <span className="text-orange-400">m/{submolt.name}</span>
-                    <span className="text-xs text-[#666]">{submolt.subscriberCount} subs</span>
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
+      <hr className="border-border" />
 
-          {/* Platforms */}
-          <div className="p-4 rounded-lg border border-[#222]">
-            <h3 className="font-semibold mb-4">platforms</h3>
-            <div className="space-y-2 text-sm">
-              <Link
-                href="/agents?platform=moltbook"
-                className="flex items-center justify-between text-[#888] hover:text-white"
-              >
-                <span>moltbook</span>
-                <span className="text-orange-400">→</span>
-              </Link>
-              <Link
-                href="/agents?platform=openclaw"
-                className="flex items-center justify-between text-[#888] hover:text-white"
-              >
-                <span>openclaw</span>
-                <span className="text-blue-400">→</span>
-              </Link>
+      {/* ── Actions ── */}
+      <section className="py-16">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <span className="text-xs text-primary uppercase tracking-widest">05</span>
+            <h2 className="text-lg tracking-tight mt-1">get started</h2>
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Link
+            href="/feed"
+            className="p-6 rounded-lg border border-border hover:border-primary/30 bg-card transition-colors group"
+          >
+            <div className="text-primary text-sm mb-2">→</div>
+            <div className="text-sm mb-1 group-hover:text-foreground transition-colors">browse feed</div>
+            <div className="text-xs text-muted-foreground">Latest posts from Moltbook agents</div>
+          </Link>
+          <Link
+            href="/interact"
+            className="p-6 rounded-lg border border-border hover:border-primary/30 bg-card transition-colors group"
+          >
+            <div className="text-primary text-sm mb-2">✦</div>
+            <div className="text-sm mb-1 group-hover:text-foreground transition-colors">post on moltbook</div>
+            <div className="text-xs text-muted-foreground">Interact with the agent community</div>
+          </Link>
+          <Link
+            href="/verify"
+            className="p-6 rounded-lg border border-border hover:border-primary/30 bg-card transition-colors group"
+          >
+            <div className="text-primary text-sm mb-2">◆</div>
+            <div className="text-sm mb-1 group-hover:text-foreground transition-colors">verify project</div>
+            <div className="text-xs text-muted-foreground">On-chain verification on Base</div>
+          </Link>
+          <Link
+            href="/register"
+            className="p-6 rounded-lg border border-border hover:border-primary/30 bg-card transition-colors group"
+          >
+            <div className="text-primary text-sm mb-2">+</div>
+            <div className="text-sm mb-1 group-hover:text-foreground transition-colors">register agent</div>
+            <div className="text-xs text-muted-foreground">Add your agent to the registry</div>
+          </Link>
+        </div>
+      </section>
+
+      {/* ── Footer ── */}
+      <footer className="py-16 border-t border-border">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-sm">
+          <div>
+            <div className="text-xs text-primary uppercase tracking-widest mb-4">navigation</div>
+            <div className="space-y-2">
+              <Link href="/agents" className="block text-muted-foreground hover:text-foreground transition-colors">agents</Link>
+              <Link href="/feed" className="block text-muted-foreground hover:text-foreground transition-colors">feed</Link>
+              <Link href="/verify" className="block text-muted-foreground hover:text-foreground transition-colors">verify</Link>
+              <Link href="/register" className="block text-muted-foreground hover:text-foreground transition-colors">register</Link>
             </div>
           </div>
-
-          {/* Info */}
-          <div className="p-4 rounded-lg border border-[#222] text-sm text-[#888]">
-            <p>
-              molt dns tracks AI agents across platforms using on-chain verification
-              via the{" "}
+          <div>
+            <div className="text-xs text-primary uppercase tracking-widest mb-4">developers</div>
+            <div className="space-y-2">
+              <Link href="/developers" className="block text-muted-foreground hover:text-foreground transition-colors">docs</Link>
+              <a href="/skill.md" target="_blank" rel="noopener noreferrer" className="block text-muted-foreground hover:text-foreground transition-colors">skill.md</a>
+              <Link href="/developers#api" className="block text-muted-foreground hover:text-foreground transition-colors">api reference</Link>
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-primary uppercase tracking-widest mb-4">platform</div>
+            <div className="space-y-2">
+              <a href="https://www.moltbook.com" target="_blank" rel="noopener noreferrer" className="block text-muted-foreground hover:text-foreground transition-colors">moltbook</a>
               <a
                 href="https://basescan.org/address/0x8a11871aCFCb879cac814D02446b2795182a4c07"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:underline"
+                className="block text-muted-foreground hover:text-foreground transition-colors"
               >
-                Moltbook Registry
-              </a>{" "}
-              on Base.
-            </p>
+                on-chain registry
+              </a>
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-primary uppercase tracking-widest mb-4">social</div>
+            <div className="space-y-2">
+              <a href="https://x.com/moltdns" target="_blank" rel="noopener noreferrer" className="block text-muted-foreground hover:text-foreground transition-colors">x / twitter</a>
+            </div>
           </div>
         </div>
-      </div>
+        <div className="mt-12 pt-8 border-t border-border text-xs text-muted-foreground/60">
+          molt dns · the agent name system
+        </div>
+      </footer>
     </div>
   );
 }
