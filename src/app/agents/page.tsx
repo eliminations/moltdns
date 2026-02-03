@@ -134,7 +134,7 @@ export default async function AgentsPage({ searchParams }: PageProps) {
             <span className="w-10 md:w-12 text-right">trust</span>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="space-y-4">
             {agents.map((agent, i) => (
               <Link
                 key={agent.id}
