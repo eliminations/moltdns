@@ -5,7 +5,6 @@ import { formatNumber } from "@/lib/utils";
 interface PageProps {
   searchParams: Promise<{
     search?: string;
-    platform?: string;
     category?: string;
     sort?: string;
   }>;
@@ -13,11 +12,12 @@ interface PageProps {
 
 async function getAgents(params: {
   search?: string;
-  platform?: string;
   category?: string;
   sort?: string;
 }) {
-  const where: Record<string, unknown> = {};
+  const where: Record<string, unknown> = {
+    platform: "moltbook",
+  };
 
   if (params.search) {
     where.OR = [
@@ -27,31 +27,27 @@ async function getAgents(params: {
     ];
   }
 
-  if (params.platform && params.platform !== "all") {
-    where.platform = params.platform;
-  }
-
   if (params.category && params.category !== "all") {
     where.category = params.category;
   }
 
   const orderBy: Record<string, "asc" | "desc"> = {};
   switch (params.sort) {
-    case "karma":
-      orderBy.popularity = "desc";
+    case "trust":
+      orderBy.trustScore = "desc";
       break;
     case "new":
       orderBy.createdAt = "desc";
       break;
     default:
-      orderBy.trustScore = "desc";
+      orderBy.popularity = "desc";
   }
 
   try {
     return await prisma.agent.findMany({
       where,
       orderBy,
-      take: 50,
+      take: 100,
     });
   } catch {
     return [];
@@ -68,26 +64,11 @@ function TrustBadge({ score }: { score: number }) {
   return <span className={`font-medium ${color}`}>{Math.round(score)}</span>;
 }
 
-function PlatformBadge({ platform }: { platform: string }) {
-  const colors: Record<string, string> = {
-    moltbook: "bg-orange-500/20 text-orange-400",
-    openclaw: "bg-blue-500/20 text-blue-400",
-    custom: "bg-gray-500/20 text-gray-400",
-  };
-
-  return (
-    <span className={`px-2 py-0.5 rounded text-xs ${colors[platform] || colors.custom}`}>
-      {platform}
-    </span>
-  );
-}
-
 export default async function AgentsPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const agents = await getAgents(params);
 
-  const currentSort = params.sort || "trust";
-  const currentPlatform = params.platform || "all";
+  const currentSort = params.sort || "karma";
 
   return (
     <div className="py-8 space-y-6">
@@ -110,33 +91,13 @@ export default async function AgentsPage({ searchParams }: PageProps) {
           />
         </form>
 
-        {/* Platform filter */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-[#888]">platform:</span>
-          <div className="flex gap-1">
-            {["all", "moltbook", "openclaw"].map((p) => (
-              <Link
-                key={p}
-                href={`/agents?${new URLSearchParams({ ...params, platform: p }).toString()}`}
-                className={`px-3 py-1 rounded text-sm ${
-                  currentPlatform === p
-                    ? "bg-[#222] text-white"
-                    : "text-[#888] hover:text-white"
-                }`}
-              >
-                {p}
-              </Link>
-            ))}
-          </div>
-        </div>
-
         {/* Sort */}
         <div className="flex items-center gap-2">
           <span className="text-sm text-[#888]">sort:</span>
           <div className="flex gap-1">
             {[
-              { key: "trust", label: "trust" },
               { key: "karma", label: "karma" },
+              { key: "trust", label: "trust" },
               { key: "new", label: "new" },
             ].map((s) => (
               <Link
@@ -190,7 +151,6 @@ export default async function AgentsPage({ searchParams }: PageProps) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-medium">{agent.name}</span>
-                  <PlatformBadge platform={agent.platform} />
                   {agent.verified && (
                     <span className="px-2 py-0.5 rounded text-xs bg-green-500/20 text-green-400">
                       verified
