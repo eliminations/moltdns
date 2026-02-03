@@ -8,6 +8,7 @@ export {
   moltbookClient,
   transformMoltbookAgent,
   type MoltbookAgent,
+  type MoltbookAgentProfile,
   type MoltbookPost,
   type MoltbookSubmolt,
   type MoltbookComment,
@@ -39,20 +40,54 @@ export async function syncMoltbookAgents(limit = 100): Promise<number> {
 
     for (const moltAgent of agents) {
       try {
-        const transformed = transformMoltbookAgent(moltAgent);
+        // Fetch real profile data for accurate karma, description, etc.
+        let profile;
+        try {
+          profile = await moltbookClient.getAgentProfile(moltAgent.name);
+        } catch {
+          // Fall back to post-extracted data if profile fetch fails
+          profile = null;
+        }
 
-        // Calculate trust scores based on Moltbook data
-        // Karma and activity are the strongest signals from post-extracted agents
-        const karmaScore = Math.min(100, 40 + Math.log10(Math.max(moltAgent.karma, 1) + 1) * 20);
+        // Use profile data when available, fall back to post-extracted data
+        const realKarma = profile?.karma ?? moltAgent.karma;
+        const realDescription = profile?.description || moltAgent.description;
+        const realAvatar = profile?.avatar_url || moltAgent.avatar_url;
+        const realLastActive = profile?.last_active || moltAgent.last_active;
+        const isClaimed = profile?.is_claimed ?? false;
+        const followerCount = profile?.follower_count ?? 0;
+        const recentPostSubmolts = (profile?.recentPosts || []).map(p => p.submolt.name);
+        const allSubmolts = [...new Set([...moltAgent.submolts, ...recentPostSubmolts])];
+
+        const enrichedAgent: typeof moltAgent = {
+          ...moltAgent,
+          karma: realKarma,
+          description: realDescription,
+          avatar_url: realAvatar,
+          last_active: realLastActive,
+          submolts: allSubmolts,
+          is_verified: isClaimed,
+        };
+
+        const transformed = transformMoltbookAgent(enrichedAgent);
+
+        // Calculate trust scores based on real Moltbook profile data
+        const karmaScore = Math.min(100, 40 + Math.log10(Math.max(realKarma, 1) + 1) * 10);
         const postActivity = Math.min(100, moltAgent.post_count * 10 + 30);
 
         const breakdown: TrustBreakdown = {
-          verificationScore: moltAgent.is_verified ? 90 : 50,
-          activityConsistency: Math.max(calculateActivityScore(moltAgent.last_active), postActivity),
+          verificationScore: isClaimed ? 75 : 40,
+          activityConsistency: Math.max(calculateActivityScore(realLastActive), postActivity),
           communityFeedback: karmaScore,
           codeAuditScore: moltAgent.post_count > 3 ? 55 : 40,
-          transparencyScore: moltAgent.post_count > 5 ? 75 : moltAgent.post_count > 1 ? 55 : 40,
+          transparencyScore: realDescription && realDescription !== "Agent on Moltbook"
+            ? (moltAgent.post_count > 5 ? 80 : 60)
+            : (moltAgent.post_count > 1 ? 50 : 35),
         };
+
+        // Bonus for followers
+        if (followerCount > 10) breakdown.communityFeedback = Math.min(100, breakdown.communityFeedback + 10);
+        if (followerCount > 50) breakdown.communityFeedback = Math.min(100, breakdown.communityFeedback + 10);
 
         const trustScore = calculateTrustScore(breakdown);
 
@@ -60,7 +95,7 @@ export async function syncMoltbookAgents(limit = 100): Promise<number> {
           where: {
             platform_platformId: {
               platform: "moltbook",
-              platformId: moltAgent.id,
+              platformId: enrichedAgent.id,
             },
           },
           create: {
@@ -86,6 +121,7 @@ export async function syncMoltbookAgents(limit = 100): Promise<number> {
         });
 
         synced++;
+        if (synced % 10 === 0) console.log(`  Synced ${synced}/${agents.length} agents...`);
       } catch (error) {
         console.error(`Failed to sync Moltbook agent ${moltAgent.name}:`, error);
       }

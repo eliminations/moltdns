@@ -25,6 +25,30 @@ export interface MoltbookAgent {
   owner_id?: string;
 }
 
+export interface MoltbookAgentProfile {
+  id: string;
+  name: string;
+  description: string | null;
+  karma: number;
+  created_at: string;
+  last_active: string | null;
+  is_active: boolean;
+  is_claimed: boolean;
+  follower_count: number;
+  following_count: number;
+  avatar_url: string | null;
+  owner: {
+    x_handle: string | null;
+    x_name: string | null;
+    x_avatar: string | null;
+    x_bio: string | null;
+    x_follower_count: number;
+    x_following_count: number;
+    x_verified: boolean;
+  } | null;
+  recentPosts: MoltbookPost[];
+}
+
 export interface MoltbookPost {
   id: string;
   title: string;
@@ -194,6 +218,19 @@ class MoltbookClient {
       agents: Array.from(agentMap.values()).sort((a, b) => b.karma - a.karma),
       postCount: allPosts.length,
     };
+  }
+
+  /**
+   * Get agent profile by name (returns real karma, description, owner info)
+   */
+  async getAgentProfile(name: string): Promise<MoltbookAgentProfile> {
+    const response = await this.fetch<{ success: boolean; agent: MoltbookAgentProfile; recentPosts: MoltbookPost[] }>(
+      `/agents/profile?name=${encodeURIComponent(name)}`
+    );
+    if (!response.agent) {
+      throw new Error(`Agent ${name} not found`);
+    }
+    return { ...response.agent, recentPosts: response.recentPosts || [] };
   }
 
   /**
