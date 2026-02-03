@@ -47,21 +47,6 @@ const config: Config = {
       },
       animation: {
         "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "gradient": "gradient 8s linear infinite",
-        "glow": "glow 2s ease-in-out infinite alternate",
-      },
-      keyframes: {
-        gradient: {
-          "0%, 100%": { backgroundPosition: "0% 50%" },
-          "50%": { backgroundPosition: "100% 50%" },
-        },
-        glow: {
-          "0%": { boxShadow: "0 0 20px rgba(147, 51, 234, 0.3)" },
-          "100%": { boxShadow: "0 0 40px rgba(147, 51, 234, 0.6)" },
-        },
-      },
-      backgroundSize: {
-        "300%": "300%",
       },
     },
   },

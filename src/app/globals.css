@@ -25,22 +25,22 @@
 }
 
 .dark {
-  --background: 0 0% 4%;
-  --foreground: 0 0% 95%;
-  --card: 0 0% 7%;
-  --card-foreground: 0 0% 95%;
+  --background: 0 0% 5%;
+  --foreground: 30 5% 92%;
+  --card: 0 0% 8%;
+  --card-foreground: 30 5% 92%;
   --primary: 24 95% 53%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 0 0% 12%;
-  --secondary-foreground: 0 0% 95%;
-  --muted: 0 0% 15%;
-  --muted-foreground: 0 0% 60%;
+  --secondary: 20 3% 13%;
+  --secondary-foreground: 30 5% 92%;
+  --muted: 20 3% 16%;
+  --muted-foreground: 20 5% 55%;
   --accent: 24 95% 53%;
   --accent-foreground: 0 0% 100%;
   --destructive: 0 62% 50%;
   --destructive-foreground: 0 0% 100%;
-  --border: 0 0% 18%;
-  --input: 0 0% 18%;
+  --border: 20 3% 16%;
+  --input: 20 3% 16%;
   --ring: 24 95% 53%;
 }
 
@@ -65,6 +65,7 @@ body {
 
 .card:hover {
   border-color: hsl(var(--muted-foreground) / 0.3);
+  box-shadow: 0 1px 3px hsl(0 0% 0% / 0.3);
 }
 
 /* Clean button */
@@ -180,7 +181,7 @@ input, textarea, select {
 
 input:focus, textarea:focus, select:focus {
   outline: none;
-  ring: 2px solid hsl(var(--ring));
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.4);
 }
 
 /* Scrollbar - minimal */
