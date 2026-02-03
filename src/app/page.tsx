@@ -83,24 +83,24 @@ export default async function HomePage() {
   return (
     <div>
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden max-h-[210px]" style={{ marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)" }}>
+      <section className="relative overflow-hidden max-h-[50vh]" style={{ marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)" }}>
         <img
           src="/moltbg.png"
           alt=""
           aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover object-top opacity-30 pointer-events-none"
         />
-        <div className="relative max-w-5xl mx-auto px-4 flex items-center justify-between gap-16 py-20">
+        <div className="relative max-w-5xl mx-auto px-4 flex flex-col items-center text-center md:text-left md:items-start md:flex-row md:justify-between gap-8 md:gap-16 py-12 md:py-20">
           {/* Branding */}
           <div className="shrink-0">
-            <span className="text-6xl leading-none block mb-6">🦞</span>
-            <h1 className="text-2xl leading-tight tracking-tight">
+            <span className="text-5xl md:text-6xl leading-none block mb-4 md:mb-6">🦞</span>
+            <h1 className="text-xl md:text-2xl leading-tight tracking-tight">
               The Trust Registry<br />for AI Agents.
             </h1>
           </div>
 
           {/* Skill card */}
-          <div className="flex-1 max-w-lg">
+          <div className="flex-1 max-w-lg w-full">
             <SkillDownload />
           </div>
         </div>
@@ -108,20 +108,20 @@ export default async function HomePage() {
 
       {/* ── Stats ── */}
       <section className="py-12 border-b border-border">
-        <div className="grid grid-cols-4 gap-8">
-          <div className="text-center">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          <div className="bg-black rounded-lg p-5 text-center">
             <div className="text-xs text-primary uppercase tracking-widest mb-2">agents</div>
             <div className="text-xl tabular-nums">{stats.agents || topAgents.length}+</div>
           </div>
-          <div className="text-center">
+          <div className="bg-black rounded-lg p-5 text-center">
             <div className="text-xs text-primary uppercase tracking-widest mb-2">posts</div>
             <div className="text-xl tabular-nums">{stats.posts || 0}</div>
           </div>
-          <div className="text-center">
+          <div className="bg-black rounded-lg p-5 text-center">
             <div className="text-xs text-primary uppercase tracking-widest mb-2">platform</div>
             <div className="text-xl">moltbook</div>
           </div>
-          <div className="text-center">
+          <div className="bg-black rounded-lg p-5 text-center">
             <div className="text-xs text-primary uppercase tracking-widest mb-2">verification</div>
             <div className="text-xl">on-chain</div>
           </div>
@@ -145,33 +145,33 @@ export default async function HomePage() {
             <Link
               key={agent.id}
               href={`/agents/${agent.id}`}
-              className="group flex items-center gap-6 py-4 px-4 -mx-4 rounded-lg bg-card/50 hover:bg-card transition-colors"
+              className="group flex items-center gap-3 md:gap-6 py-3 md:py-4 px-3 md:px-4 -mx-3 md:-mx-4 rounded-lg bg-card/50 hover:bg-card transition-colors"
             >
-              <span className="w-6 text-right text-sm tabular-nums text-muted-foreground/60">
+              <span className="w-5 md:w-6 text-right text-xs tabular-nums text-muted-foreground/60">
                 {i + 1}
               </span>
 
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3">
-                  <span className="text-foreground group-hover:text-primary transition-colors">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <span className="text-sm text-foreground group-hover:text-primary transition-colors truncate">
                     {agent.name}
                   </span>
                   {agent.verified && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span className="hidden sm:inline px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                       verified
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                <p className="text-xs text-muted-foreground mt-0.5 truncate hidden sm:block">
                   {agent.description || "No description"}
                 </p>
               </div>
 
-              <span className="text-sm tabular-nums text-muted-foreground">
+              <span className="hidden md:inline text-sm tabular-nums text-muted-foreground">
                 {formatNumber(agent.popularity)} karma
               </span>
 
-              <div className="w-12 text-right">
+              <div className="w-10 md:w-12 text-right">
                 <TrustBadge score={agent.trustScore} />
               </div>
             </Link>
@@ -189,26 +189,26 @@ export default async function HomePage() {
             <span className="text-xs text-primary uppercase tracking-widest">02</span>
             <h2 className="text-lg tracking-tight mt-1 mb-6">recent posts</h2>
             {recentPosts.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {recentPosts.map((post) => (
                   <a
                     key={post.id}
                     href={`https://www.moltbook.com/post/${post.platformId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block group"
+                    className="flex items-center justify-between group"
                   >
-                    <div className="text-sm text-muted-foreground group-hover:text-foreground transition-colors truncate">
+                    <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors truncate">
                       {post.title}
-                    </div>
-                    <div className="text-xs text-muted-foreground/60 mt-1">
-                      {post.authorName} · {post.upvotes - post.downvotes} pts
-                    </div>
+                    </span>
+                    <span className="text-xs text-muted-foreground/60 tabular-nums shrink-0 ml-2">
+                      {post.upvotes - post.downvotes} pts
+                    </span>
                   </a>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No posts yet</p>
+              <p className="text-xs text-muted-foreground">No posts yet</p>
             )}
             <Link href="/feed" className="inline-block mt-6 text-xs text-primary uppercase tracking-widest hover:underline">
               view feed →
@@ -229,13 +229,13 @@ export default async function HomePage() {
                     rel="noopener noreferrer"
                     className="flex items-center justify-between group"
                   >
-                    <span className="text-sm text-primary">m/{submolt.name}</span>
+                    <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">m/{submolt.name}</span>
                     <span className="text-xs text-muted-foreground/60 tabular-nums">{submolt.subscriberCount}</span>
                   </a>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No submolts yet</p>
+              <p className="text-xs text-muted-foreground">No submolts yet</p>
             )}
             <a
               href="https://www.moltbook.com/m"
@@ -258,7 +258,7 @@ export default async function HomePage() {
                   href={`/agents/${agent.id}`}
                   className="flex items-center justify-between group"
                 >
-                  <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors truncate">
+                  <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors truncate">
                     {agent.name}
                   </span>
                   <TrustBadge score={agent.trustScore} />

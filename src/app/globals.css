@@ -24,7 +24,7 @@
 }
 
 .dark {
-  --background: 0 0% 4%;
+  --background: 0 0% 0%;
   --foreground: 30 5% 90%;
   --card: 0 0% 7%;
   --card-foreground: 30 5% 90%;
@@ -92,4 +92,13 @@ input:focus, textarea:focus, select:focus {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* Hide scrollbar but allow scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

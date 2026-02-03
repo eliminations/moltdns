@@ -15,7 +15,7 @@ export function Navbar() {
   ];
 
   return (
-    <header className="border-b border-border">
+    <header>
       <nav className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
@@ -23,13 +23,13 @@ export function Navbar() {
           <span className="text-xs uppercase tracking-widest">molt dns</span>
         </Link>
 
-        {/* Navigation */}
-        <div className="flex items-center gap-1">
+        {/* Navigation — horizontally scrollable on mobile */}
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider transition-colors ${
+              className={`px-2.5 py-1.5 rounded-full text-xs uppercase tracking-wider transition-colors whitespace-nowrap ${
                 link.match(pathname)
                   ? "text-foreground bg-secondary"
                   : "text-muted-foreground hover:text-foreground"
@@ -40,7 +40,7 @@ export function Navbar() {
           ))}
           <Link
             href="/developers"
-            className={`ml-2 px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition-colors ${
+            className={`ml-1 px-2.5 py-1.5 rounded-full text-xs uppercase tracking-wider border transition-colors whitespace-nowrap ${
               pathname === "/developers"
                 ? "border-primary/50 text-primary"
                 : "border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
