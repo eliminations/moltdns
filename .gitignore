@@ -42,3 +42,9 @@ next-env.d.ts
 # prisma
 prisma/*.db
 prisma/*.db-journal
+
+# claude-flow / claude code tooling
+.claude-flow/
+.claude/
+.mcp.json
+CLAUDE.md
