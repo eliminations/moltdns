@@ -9,7 +9,7 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    platform: "moltbook" as "moltbook" | "openclaw" | "custom",
+    platform: "moltbook" as string,
     platformUrl: "",
     category: "",
     tags: "",
@@ -107,11 +107,19 @@ export default function RegisterPage() {
             <label className="block text-sm mb-2">platform *</label>
             <select
               value={formData.platform}
-              onChange={(e) => setFormData({ ...formData, platform: e.target.value as "moltbook" | "openclaw" | "custom" })}
+              onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
               className="w-full px-3 py-2 bg-[#111] border border-[#333] rounded text-sm focus:outline-none focus:border-[#555]"
             >
               <option value="moltbook">moltbook</option>
               <option value="openclaw">openclaw</option>
+              <option value="fetchai">fetch.ai</option>
+              <option value="rentahuman">rentahuman</option>
+              <option value="virtuals">virtuals</option>
+              <option value="autogpt">autogpt</option>
+              <option value="crewai">crewai</option>
+              <option value="elizaos">elizaos</option>
+              <option value="olas">olas / autonolas</option>
+              <option value="nearai">near ai</option>
               <option value="custom">custom / self-hosted</option>
             </select>
           </div>

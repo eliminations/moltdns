@@ -54,12 +54,40 @@ export {
   type AutoGPTAgent,
 } from "./autogpt";
 
+export {
+  crewaiClient,
+  transformCrewAIAgent,
+  type CrewAIAgent,
+} from "./crewai";
+
+export {
+  elizaosClient,
+  transformElizaOSAgent,
+  type ElizaOSAgent,
+} from "./elizaos";
+
+export {
+  olasClient,
+  transformOlasAgent,
+  type OlasAgent,
+} from "./olas";
+
+export {
+  nearaiClient,
+  transformNEARAIAgent,
+  type NEARAIAgent,
+} from "./nearai";
+
 import { moltbookClient, transformMoltbookAgent } from "./moltbook";
 import { openclawClient, transformOpenClawAgent } from "./openclaw";
 import { fetchaiClient, transformFetchAIAgent } from "./fetchai";
 import { rentahumanClient, transformRentAHumanAgent } from "./rentahuman";
 import { virtualsClient, transformVirtualsAgent } from "./virtuals";
 import { autogptClient, transformAutoGPTAgent } from "./autogpt";
+import { crewaiClient, transformCrewAIAgent } from "./crewai";
+import { elizaosClient, transformElizaOSAgent } from "./elizaos";
+import { olasClient, transformOlasAgent } from "./olas";
+import { nearaiClient, transformNEARAIAgent } from "./nearai";
 import { prisma } from "../db";
 import { calculateTrustScore, TrustBreakdown } from "../trust-algorithm";
 
@@ -632,6 +660,373 @@ export async function syncAutoGPTAgents(limit = 50): Promise<number> {
 }
 
 /**
+ * Fetch and sync agents from CrewAI Marketplace
+ */
+export async function syncCrewAIAgents(limit = 50): Promise<number> {
+  console.log("Syncing CrewAI agents...");
+  let synced = 0;
+
+  try {
+    const response = await crewaiClient.getPublicAgents({
+      limit,
+      sort: "popular",
+    });
+
+    const agents = response.agents;
+
+    for (const agent of agents) {
+      try {
+        const transformed = transformCrewAIAgent(agent);
+
+        const runScore = Math.min(100, 30 + Math.log10(agent.runs + 1) * 15);
+
+        const breakdown: TrustBreakdown = {
+          verificationScore: agent.runs > 100 ? 75 : (agent.runs > 10 ? 55 : 35),
+          activityConsistency: calculateActivityScore(agent.updated_at),
+          communityFeedback: Math.min(100, agent.rating * 20),
+          codeAuditScore: agent.tools.length > 3 ? 60 : 35,
+          transparencyScore: agent.description.length > 100 ? 70 : 40,
+        };
+
+        if (agent.review_count > 5) breakdown.communityFeedback = Math.min(100, breakdown.communityFeedback + 10);
+
+        const trustScore = calculateTrustScore(breakdown);
+
+        await prisma.agent.upsert({
+          where: {
+            platform_platformId: {
+              platform: "crewai",
+              platformId: agent.id,
+            },
+          },
+          create: {
+            ...transformed,
+            tags: JSON.stringify(transformed.tags),
+            capabilities: JSON.stringify(transformed.capabilities),
+            trustScore,
+            ...breakdown,
+          },
+          update: {
+            name: transformed.name,
+            description: transformed.description,
+            avatar: transformed.avatar,
+            platformUrl: transformed.platformUrl,
+            tags: JSON.stringify(transformed.tags),
+            capabilities: JSON.stringify(transformed.capabilities),
+            trustScore,
+            ...breakdown,
+            popularity: transformed.popularity,
+            lastActive: transformed.lastActive,
+            verified: transformed.verified,
+          },
+        });
+
+        synced++;
+      } catch (error) {
+        console.error(`Failed to sync CrewAI agent ${agent.name}:`, error);
+      }
+    }
+
+    await prisma.syncLog.create({
+      data: {
+        platform: "crewai",
+        type: "agents",
+        status: "success",
+        count: synced,
+      },
+    });
+  } catch (error) {
+    console.error("CrewAI sync error:", error);
+    await prisma.syncLog.create({
+      data: {
+        platform: "crewai",
+        type: "agents",
+        status: "failed",
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+    });
+  }
+
+  console.log(`Synced ${synced} agents from CrewAI`);
+  return synced;
+}
+
+/**
+ * Fetch and sync agents from ElizaOS
+ */
+export async function syncElizaOSAgents(limit = 50): Promise<number> {
+  console.log("Syncing ElizaOS agents...");
+  let synced = 0;
+
+  try {
+    const response = await elizaosClient.getAgents({
+      limit,
+      sort: "popular",
+    });
+
+    const agents = response.agents;
+
+    for (const agent of agents) {
+      try {
+        const transformed = transformElizaOSAgent(agent);
+
+        const followerScore = Math.min(100, 30 + Math.log10(agent.follower_count + 1) * 15);
+        const messageScore = Math.min(100, 30 + Math.log10(agent.message_count + 1) * 10);
+
+        const breakdown: TrustBreakdown = {
+          verificationScore: agent.is_verified ? 85 : (agent.token_address ? 65 : 35),
+          activityConsistency: calculateActivityScore(agent.updated_at),
+          communityFeedback: Math.max(followerScore, messageScore),
+          codeAuditScore: agent.plugins.length > 3 ? 60 : 35,
+          transparencyScore: agent.bio.length > 0 && agent.topics.length > 0 ? 70 : 35,
+        };
+
+        const trustScore = calculateTrustScore(breakdown);
+
+        await prisma.agent.upsert({
+          where: {
+            platform_platformId: {
+              platform: "elizaos",
+              platformId: agent.id,
+            },
+          },
+          create: {
+            ...transformed,
+            tags: JSON.stringify(transformed.tags),
+            capabilities: JSON.stringify(transformed.capabilities),
+            trustScore,
+            ...breakdown,
+          },
+          update: {
+            name: transformed.name,
+            description: transformed.description,
+            avatar: transformed.avatar,
+            platformUrl: transformed.platformUrl,
+            tags: JSON.stringify(transformed.tags),
+            capabilities: JSON.stringify(transformed.capabilities),
+            trustScore,
+            ...breakdown,
+            popularity: transformed.popularity,
+            lastActive: transformed.lastActive,
+            verified: transformed.verified,
+          },
+        });
+
+        synced++;
+      } catch (error) {
+        console.error(`Failed to sync ElizaOS agent ${agent.name}:`, error);
+      }
+    }
+
+    await prisma.syncLog.create({
+      data: {
+        platform: "elizaos",
+        type: "agents",
+        status: "success",
+        count: synced,
+      },
+    });
+  } catch (error) {
+    console.error("ElizaOS sync error:", error);
+    await prisma.syncLog.create({
+      data: {
+        platform: "elizaos",
+        type: "agents",
+        status: "failed",
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+    });
+  }
+
+  console.log(`Synced ${synced} agents from ElizaOS`);
+  return synced;
+}
+
+/**
+ * Fetch and sync agents from Olas/Autonolas
+ */
+export async function syncOlasAgents(limit = 50): Promise<number> {
+  console.log("Syncing Olas agents...");
+  let synced = 0;
+
+  try {
+    const response = await olasClient.getAgents({ limit });
+
+    if (!response.success || !response.data) {
+      throw new Error("Failed to fetch Olas agents");
+    }
+
+    const agents = response.data;
+
+    for (const agent of agents) {
+      try {
+        const transformed = transformOlasAgent(agent);
+
+        const breakdown: TrustBreakdown = {
+          verificationScore: agent.state === "active" ? 85 : (agent.state === "deployed" ? 70 : 40),
+          activityConsistency: calculateActivityScore(agent.updated_at),
+          communityFeedback: Math.min(100, 30 + agent.slots * 10),
+          codeAuditScore: agent.code_uri ? 65 : 30,
+          transparencyScore: agent.description && agent.description.length > 50 ? 70 : 35,
+        };
+
+        if (agent.components > 5) breakdown.codeAuditScore = Math.min(100, breakdown.codeAuditScore + 15);
+
+        const trustScore = calculateTrustScore(breakdown);
+
+        await prisma.agent.upsert({
+          where: {
+            platform_platformId: {
+              platform: "olas",
+              platformId: agent.id,
+            },
+          },
+          create: {
+            ...transformed,
+            tags: JSON.stringify(transformed.tags),
+            capabilities: JSON.stringify(transformed.capabilities),
+            trustScore,
+            ...breakdown,
+          },
+          update: {
+            name: transformed.name,
+            description: transformed.description,
+            avatar: transformed.avatar,
+            platformUrl: transformed.platformUrl,
+            tags: JSON.stringify(transformed.tags),
+            capabilities: JSON.stringify(transformed.capabilities),
+            trustScore,
+            ...breakdown,
+            popularity: transformed.popularity,
+            lastActive: transformed.lastActive,
+            verified: transformed.verified,
+          },
+        });
+
+        synced++;
+      } catch (error) {
+        console.error(`Failed to sync Olas agent ${agent.name}:`, error);
+      }
+    }
+
+    await prisma.syncLog.create({
+      data: {
+        platform: "olas",
+        type: "agents",
+        status: "success",
+        count: synced,
+      },
+    });
+  } catch (error) {
+    console.error("Olas sync error:", error);
+    await prisma.syncLog.create({
+      data: {
+        platform: "olas",
+        type: "agents",
+        status: "failed",
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+    });
+  }
+
+  console.log(`Synced ${synced} agents from Olas`);
+  return synced;
+}
+
+/**
+ * Fetch and sync agents from NEAR AI
+ */
+export async function syncNEARAIAgents(limit = 50): Promise<number> {
+  console.log("Syncing NEAR AI agents...");
+  let synced = 0;
+
+  try {
+    const response = await nearaiClient.getAgents({
+      limit,
+      sort: "popular",
+    });
+
+    const agents = response.agents;
+
+    for (const agent of agents) {
+      try {
+        const transformed = transformNEARAIAgent(agent);
+
+        const starScore = Math.min(100, 30 + Math.log10(agent.star_count + 1) * 20);
+        const runScore = Math.min(100, 30 + Math.log10(agent.run_count + 1) * 15);
+
+        const breakdown: TrustBreakdown = {
+          verificationScore: agent.star_count > 10 ? 70 : (agent.run_count > 50 ? 60 : 35),
+          activityConsistency: Math.max(calculateActivityScore(agent.updated_at), runScore),
+          communityFeedback: starScore,
+          codeAuditScore: agent.tags.length > 3 ? 55 : 35,
+          transparencyScore: agent.description && agent.description.length > 50 ? 70 : 35,
+        };
+
+        if (agent.fork_count > 5) breakdown.communityFeedback = Math.min(100, breakdown.communityFeedback + 10);
+
+        const trustScore = calculateTrustScore(breakdown);
+
+        await prisma.agent.upsert({
+          where: {
+            platform_platformId: {
+              platform: "nearai",
+              platformId: agent.id,
+            },
+          },
+          create: {
+            ...transformed,
+            tags: JSON.stringify(transformed.tags),
+            capabilities: JSON.stringify(transformed.capabilities),
+            trustScore,
+            ...breakdown,
+          },
+          update: {
+            name: transformed.name,
+            description: transformed.description,
+            avatar: transformed.avatar,
+            platformUrl: transformed.platformUrl,
+            tags: JSON.stringify(transformed.tags),
+            capabilities: JSON.stringify(transformed.capabilities),
+            trustScore,
+            ...breakdown,
+            popularity: transformed.popularity,
+            lastActive: transformed.lastActive,
+            verified: transformed.verified,
+          },
+        });
+
+        synced++;
+      } catch (error) {
+        console.error(`Failed to sync NEAR AI agent ${agent.name}:`, error);
+      }
+    }
+
+    await prisma.syncLog.create({
+      data: {
+        platform: "nearai",
+        type: "agents",
+        status: "success",
+        count: synced,
+      },
+    });
+  } catch (error) {
+    console.error("NEAR AI sync error:", error);
+    await prisma.syncLog.create({
+      data: {
+        platform: "nearai",
+        type: "agents",
+        status: "failed",
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+    });
+  }
+
+  console.log(`Synced ${synced} agents from NEAR AI`);
+  return synced;
+}
+
+/**
  * Sync all platforms
  */
 export async function syncAllPlatforms(): Promise<{
@@ -641,18 +1036,26 @@ export async function syncAllPlatforms(): Promise<{
   rentahuman: number;
   virtuals: number;
   autogpt: number;
+  crewai: number;
+  elizaos: number;
+  olas: number;
+  nearai: number;
   total: number;
 }> {
-  const [moltbook, openclaw, fetchai, rentahuman, virtuals, autogpt] = await Promise.all([
+  const [moltbook, openclaw, fetchai, rentahuman, virtuals, autogpt, crewai, elizaos, olas, nearai] = await Promise.all([
     syncMoltbookAgents(),
     syncOpenClawAgents(),
     syncFetchAIAgents(),
     syncRentAHumanAgents(),
     syncVirtualsAgents(),
     syncAutoGPTAgents(),
+    syncCrewAIAgents(),
+    syncElizaOSAgents(),
+    syncOlasAgents(),
+    syncNEARAIAgents(),
   ]);
 
-  const total = moltbook + openclaw + fetchai + rentahuman + virtuals + autogpt;
+  const total = moltbook + openclaw + fetchai + rentahuman + virtuals + autogpt + crewai + elizaos + olas + nearai;
 
   return {
     moltbook,
@@ -661,6 +1064,10 @@ export async function syncAllPlatforms(): Promise<{
     rentahuman,
     virtuals,
     autogpt,
+    crewai,
+    elizaos,
+    olas,
+    nearai,
     total,
   };
 }

@@ -10,6 +10,10 @@ const platformLabels: Record<string, string> = {
   rentahuman: "rentahuman",
   virtuals: "virtuals",
   autogpt: "autogpt",
+  crewai: "crewai",
+  elizaos: "elizaos",
+  olas: "olas",
+  nearai: "near ai",
 };
 
 const platformGradients: Record<string, string> = {
@@ -19,6 +23,10 @@ const platformGradients: Record<string, string> = {
   rentahuman: "from-amber-500 to-orange-500",
   virtuals: "from-emerald-500 to-teal-500",
   autogpt: "from-rose-500 to-red-500",
+  crewai: "from-sky-500 to-blue-500",
+  elizaos: "from-fuchsia-500 to-purple-500",
+  olas: "from-cyan-500 to-green-500",
+  nearai: "from-lime-500 to-emerald-500",
 };
 
 async function getTopAgents() {

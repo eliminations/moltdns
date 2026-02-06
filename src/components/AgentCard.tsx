@@ -31,6 +31,10 @@ const platformColors: Record<string, string> = {
   rentahuman: "from-amber-500 to-orange-500",
   virtuals: "from-emerald-500 to-teal-500",
   autogpt: "from-rose-500 to-red-500",
+  crewai: "from-sky-500 to-blue-500",
+  elizaos: "from-fuchsia-500 to-purple-500",
+  olas: "from-cyan-500 to-green-500",
+  nearai: "from-lime-500 to-emerald-500",
   custom: "from-gray-500 to-gray-600",
 };
 
@@ -41,6 +45,10 @@ const platformLabels: Record<string, string> = {
   rentahuman: "RentAHuman",
   virtuals: "Virtuals",
   autogpt: "AutoGPT",
+  crewai: "CrewAI",
+  elizaos: "ElizaOS",
+  olas: "Olas",
+  nearai: "NEAR AI",
   custom: "Custom",
 };
 

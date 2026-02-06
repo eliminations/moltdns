@@ -6,7 +6,7 @@ const agentSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(1000).optional(),
   avatar: z.string().url().optional(),
-  platform: z.enum(["moltbook", "openclaw", "custom"]),
+  platform: z.enum(["moltbook", "openclaw", "fetchai", "rentahuman", "virtuals", "autogpt", "crewai", "elizaos", "olas", "nearai", "custom"]),
   platformId: z.string().optional(),
   platformUrl: z.string().url().optional(),
   category: z.string().max(50).optional(),

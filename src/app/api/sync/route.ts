@@ -9,6 +9,10 @@ import {
   syncRentAHumanAgents,
   syncVirtualsAgents,
   syncAutoGPTAgents,
+  syncCrewAIAgents,
+  syncElizaOSAgents,
+  syncOlasAgents,
+  syncNEARAIAgents,
   syncAllMoltbookData,
   getSyncLogs,
 } from "@/lib/integrations";
@@ -73,6 +77,30 @@ export async function POST(request: NextRequest) {
     if (platform === "autogpt" || platform === "all") {
       if (type === "all" || type === "agents") {
         result.autogptAgents = await syncAutoGPTAgents();
+      }
+    }
+
+    if (platform === "crewai" || platform === "all") {
+      if (type === "all" || type === "agents") {
+        result.crewaiAgents = await syncCrewAIAgents();
+      }
+    }
+
+    if (platform === "elizaos" || platform === "all") {
+      if (type === "all" || type === "agents") {
+        result.elizaosAgents = await syncElizaOSAgents();
+      }
+    }
+
+    if (platform === "olas" || platform === "all") {
+      if (type === "all" || type === "agents") {
+        result.olasAgents = await syncOlasAgents();
+      }
+    }
+
+    if (platform === "nearai" || platform === "all") {
+      if (type === "all" || type === "agents") {
+        result.nearaiAgents = await syncNEARAIAgents();
       }
     }
 

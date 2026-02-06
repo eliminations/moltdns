@@ -10,6 +10,10 @@ const platformConfig: Record<string, { label: string; color: string }> = {
   rentahuman: { label: "rentahuman", color: "bg-gradient-to-r from-amber-500 to-orange-500" },
   virtuals: { label: "virtuals", color: "bg-gradient-to-r from-emerald-500 to-teal-500" },
   autogpt: { label: "autogpt", color: "bg-gradient-to-r from-rose-500 to-red-500" },
+  crewai: { label: "crewai", color: "bg-gradient-to-r from-sky-500 to-blue-500" },
+  elizaos: { label: "elizaos", color: "bg-gradient-to-r from-fuchsia-500 to-purple-500" },
+  olas: { label: "olas", color: "bg-gradient-to-r from-cyan-500 to-green-500" },
+  nearai: { label: "near ai", color: "bg-gradient-to-r from-lime-500 to-emerald-500" },
 };
 
 interface PageProps {
