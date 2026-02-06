@@ -30,8 +30,36 @@ export {
   type BagsTradeQuote,
 } from "./bags";
 
+export {
+  fetchaiClient,
+  transformFetchAIAgent,
+  type FetchAIAgent,
+} from "./fetchai";
+
+export {
+  rentahumanClient,
+  transformRentAHumanAgent,
+  type RentAHumanProfile,
+} from "./rentahuman";
+
+export {
+  virtualsClient,
+  transformVirtualsAgent,
+  type VirtualsAgent,
+} from "./virtuals";
+
+export {
+  autogptClient,
+  transformAutoGPTAgent,
+  type AutoGPTAgent,
+} from "./autogpt";
+
 import { moltbookClient, transformMoltbookAgent } from "./moltbook";
 import { openclawClient, transformOpenClawAgent } from "./openclaw";
+import { fetchaiClient, transformFetchAIAgent } from "./fetchai";
+import { rentahumanClient, transformRentAHumanAgent } from "./rentahuman";
+import { virtualsClient, transformVirtualsAgent } from "./virtuals";
+import { autogptClient, transformAutoGPTAgent } from "./autogpt";
 import { prisma } from "../db";
 import { calculateTrustScore, TrustBreakdown } from "../trust-algorithm";
 
@@ -238,22 +266,402 @@ export async function syncOpenClawAgents(limit = 100): Promise<number> {
 }
 
 /**
+ * Fetch and sync agents from Fetch.ai Agentverse
+ */
+export async function syncFetchAIAgents(limit = 50): Promise<number> {
+  console.log("Syncing Fetch.ai agents...");
+  let synced = 0;
+
+  try {
+    const response = await fetchaiClient.searchAgents({
+      sort: "popular",
+      limit,
+      filters: { state: "active" },
+    });
+
+    const agents = response.agents;
+
+    for (const agent of agents) {
+      try {
+        const transformed = transformFetchAIAgent(agent);
+
+        const interactionScore = Math.min(100, 30 + Math.log10(agent.interaction_count + 1) * 15);
+
+        const breakdown: TrustBreakdown = {
+          verificationScore: agent.state === "active" ? 70 : 30,
+          activityConsistency: calculateActivityScore(agent.updated_at),
+          communityFeedback: interactionScore,
+          codeAuditScore: agent.protocol_digest ? 55 : 35,
+          transparencyScore: agent.description.length > 50 ? 65 : 35,
+        };
+
+        const trustScore = calculateTrustScore(breakdown);
+
+        await prisma.agent.upsert({
+          where: {
+            platform_platformId: {
+              platform: "fetchai",
+              platformId: agent.address,
+            },
+          },
+          create: {
+            ...transformed,
+            tags: JSON.stringify(transformed.tags),
+            capabilities: JSON.stringify(transformed.capabilities),
+            trustScore,
+            ...breakdown,
+          },
+          update: {
+            name: transformed.name,
+            description: transformed.description,
+            avatar: transformed.avatar,
+            platformUrl: transformed.platformUrl,
+            tags: JSON.stringify(transformed.tags),
+            capabilities: JSON.stringify(transformed.capabilities),
+            trustScore,
+            ...breakdown,
+            popularity: transformed.popularity,
+            lastActive: transformed.lastActive,
+            verified: transformed.verified,
+          },
+        });
+
+        synced++;
+      } catch (error) {
+        console.error(`Failed to sync Fetch.ai agent ${agent.name}:`, error);
+      }
+    }
+
+    await prisma.syncLog.create({
+      data: {
+        platform: "fetchai",
+        type: "agents",
+        status: "success",
+        count: synced,
+      },
+    });
+  } catch (error) {
+    console.error("Fetch.ai sync error:", error);
+    await prisma.syncLog.create({
+      data: {
+        platform: "fetchai",
+        type: "agents",
+        status: "failed",
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+    });
+  }
+
+  console.log(`Synced ${synced} agents from Fetch.ai`);
+  return synced;
+}
+
+/**
+ * Fetch and sync agents from RentAHuman
+ */
+export async function syncRentAHumanAgents(limit = 50): Promise<number> {
+  console.log("Syncing RentAHuman agents...");
+  let synced = 0;
+
+  try {
+    const response = await rentahumanClient.getHumans({ limit });
+    const humans = response.humans;
+
+    for (const human of humans) {
+      try {
+        const transformed = transformRentAHumanAgent(human);
+
+        const taskScore = Math.min(100, 30 + Math.log10(human.completed_tasks + 1) * 20);
+        const skillScore = Math.min(100, human.skills.length * 15 + 20);
+
+        const breakdown: TrustBreakdown = {
+          verificationScore: human.crypto_wallets.length > 0 ? 75 : 40,
+          activityConsistency: calculateActivityScore(human.updated_at),
+          communityFeedback: Math.min(100, human.rating * 20),
+          codeAuditScore: skillScore,
+          transparencyScore: human.bio && human.bio.length > 30 ? 70 : 35,
+        };
+
+        // Bonus for completed tasks
+        if (human.completed_tasks > 5) breakdown.communityFeedback = Math.min(100, breakdown.communityFeedback + 10);
+
+        const trustScore = calculateTrustScore(breakdown);
+
+        await prisma.agent.upsert({
+          where: {
+            platform_platformId: {
+              platform: "rentahuman",
+              platformId: human.id,
+            },
+          },
+          create: {
+            ...transformed,
+            tags: JSON.stringify(transformed.tags),
+            capabilities: JSON.stringify(transformed.capabilities),
+            trustScore,
+            ...breakdown,
+          },
+          update: {
+            name: transformed.name,
+            description: transformed.description,
+            avatar: transformed.avatar,
+            platformUrl: transformed.platformUrl,
+            tags: JSON.stringify(transformed.tags),
+            capabilities: JSON.stringify(transformed.capabilities),
+            trustScore,
+            ...breakdown,
+            popularity: transformed.popularity,
+            lastActive: transformed.lastActive,
+            verified: transformed.verified,
+          },
+        });
+
+        synced++;
+      } catch (error) {
+        console.error(`Failed to sync RentAHuman agent ${human.name}:`, error);
+      }
+    }
+
+    await prisma.syncLog.create({
+      data: {
+        platform: "rentahuman",
+        type: "agents",
+        status: "success",
+        count: synced,
+      },
+    });
+  } catch (error) {
+    console.error("RentAHuman sync error:", error);
+    await prisma.syncLog.create({
+      data: {
+        platform: "rentahuman",
+        type: "agents",
+        status: "failed",
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+    });
+  }
+
+  console.log(`Synced ${synced} agents from RentAHuman`);
+  return synced;
+}
+
+/**
+ * Fetch and sync agents from Virtuals Protocol
+ */
+export async function syncVirtualsAgents(limit = 50): Promise<number> {
+  console.log("Syncing Virtuals Protocol agents...");
+  let synced = 0;
+
+  try {
+    const response = await virtualsClient.getAgents({ limit, sort: "market_cap" });
+
+    if (!response.success || !response.data) {
+      throw new Error("Failed to fetch Virtuals agents");
+    }
+
+    const agents = response.data;
+
+    for (const agent of agents) {
+      try {
+        const transformed = transformVirtualsAgent(agent);
+
+        const holderScore = Math.min(100, 30 + Math.log10(agent.total_holders + 1) * 15);
+        const mcapScore = Math.min(100, 20 + Math.log10(agent.market_cap + 1) * 8);
+
+        const breakdown: TrustBreakdown = {
+          verificationScore: agent.status === "graduated" ? 85 : (agent.bonding_curve_progress > 50 ? 60 : 35),
+          activityConsistency: calculateActivityScore(agent.updated_at),
+          communityFeedback: holderScore,
+          codeAuditScore: mcapScore,
+          transparencyScore: agent.description.length > 50 ? 65 : 35,
+        };
+
+        const trustScore = calculateTrustScore(breakdown);
+
+        await prisma.agent.upsert({
+          where: {
+            platform_platformId: {
+              platform: "virtuals",
+              platformId: agent.id,
+            },
+          },
+          create: {
+            ...transformed,
+            tags: JSON.stringify(transformed.tags),
+            capabilities: JSON.stringify(transformed.capabilities),
+            trustScore,
+            ...breakdown,
+          },
+          update: {
+            name: transformed.name,
+            description: transformed.description,
+            avatar: transformed.avatar,
+            platformUrl: transformed.platformUrl,
+            tags: JSON.stringify(transformed.tags),
+            capabilities: JSON.stringify(transformed.capabilities),
+            trustScore,
+            ...breakdown,
+            popularity: transformed.popularity,
+            lastActive: transformed.lastActive,
+            verified: transformed.verified,
+          },
+        });
+
+        synced++;
+      } catch (error) {
+        console.error(`Failed to sync Virtuals agent ${agent.name}:`, error);
+      }
+    }
+
+    await prisma.syncLog.create({
+      data: {
+        platform: "virtuals",
+        type: "agents",
+        status: "success",
+        count: synced,
+      },
+    });
+  } catch (error) {
+    console.error("Virtuals sync error:", error);
+    await prisma.syncLog.create({
+      data: {
+        platform: "virtuals",
+        type: "agents",
+        status: "failed",
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+    });
+  }
+
+  console.log(`Synced ${synced} agents from Virtuals Protocol`);
+  return synced;
+}
+
+/**
+ * Fetch and sync agents from AutoGPT Marketplace
+ */
+export async function syncAutoGPTAgents(limit = 50): Promise<number> {
+  console.log("Syncing AutoGPT agents...");
+  let synced = 0;
+
+  try {
+    const response = await autogptClient.getMarketplaceAgents({
+      per_page: limit,
+      sort: "popular",
+    });
+
+    const agents = response.agents;
+
+    for (const agent of agents) {
+      try {
+        const transformed = transformAutoGPTAgent(agent);
+
+        const downloadScore = Math.min(100, 30 + Math.log10(agent.downloads + 1) * 15);
+
+        const breakdown: TrustBreakdown = {
+          verificationScore: agent.is_featured ? 80 : 45,
+          activityConsistency: calculateActivityScore(agent.updated_at),
+          communityFeedback: Math.min(100, agent.rating * 20),
+          codeAuditScore: agent.keywords.length > 3 ? 55 : 35,
+          transparencyScore: agent.description.length > 100 ? 70 : 40,
+        };
+
+        // Bonus for reviews
+        if (agent.review_count > 5) breakdown.communityFeedback = Math.min(100, breakdown.communityFeedback + 10);
+
+        const trustScore = calculateTrustScore(breakdown);
+
+        await prisma.agent.upsert({
+          where: {
+            platform_platformId: {
+              platform: "autogpt",
+              platformId: agent.id,
+            },
+          },
+          create: {
+            ...transformed,
+            tags: JSON.stringify(transformed.tags),
+            capabilities: JSON.stringify(transformed.capabilities),
+            trustScore,
+            ...breakdown,
+          },
+          update: {
+            name: transformed.name,
+            description: transformed.description,
+            avatar: transformed.avatar,
+            platformUrl: transformed.platformUrl,
+            tags: JSON.stringify(transformed.tags),
+            capabilities: JSON.stringify(transformed.capabilities),
+            trustScore,
+            ...breakdown,
+            popularity: transformed.popularity,
+            lastActive: transformed.lastActive,
+            verified: transformed.verified,
+          },
+        });
+
+        synced++;
+      } catch (error) {
+        console.error(`Failed to sync AutoGPT agent ${agent.name}:`, error);
+      }
+    }
+
+    await prisma.syncLog.create({
+      data: {
+        platform: "autogpt",
+        type: "agents",
+        status: "success",
+        count: synced,
+      },
+    });
+  } catch (error) {
+    console.error("AutoGPT sync error:", error);
+    await prisma.syncLog.create({
+      data: {
+        platform: "autogpt",
+        type: "agents",
+        status: "failed",
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+    });
+  }
+
+  console.log(`Synced ${synced} agents from AutoGPT`);
+  return synced;
+}
+
+/**
  * Sync all platforms
  */
 export async function syncAllPlatforms(): Promise<{
   moltbook: number;
   openclaw: number;
+  fetchai: number;
+  rentahuman: number;
+  virtuals: number;
+  autogpt: number;
   total: number;
 }> {
-  const [moltbook, openclaw] = await Promise.all([
+  const [moltbook, openclaw, fetchai, rentahuman, virtuals, autogpt] = await Promise.all([
     syncMoltbookAgents(),
     syncOpenClawAgents(),
+    syncFetchAIAgents(),
+    syncRentAHumanAgents(),
+    syncVirtualsAgents(),
+    syncAutoGPTAgents(),
   ]);
+
+  const total = moltbook + openclaw + fetchai + rentahuman + virtuals + autogpt;
 
   return {
     moltbook,
     openclaw,
-    total: moltbook + openclaw,
+    fetchai,
+    rentahuman,
+    virtuals,
+    autogpt,
+    total,
   };
 }
 

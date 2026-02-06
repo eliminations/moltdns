@@ -3,10 +3,27 @@ import { prisma } from "@/lib/db";
 import { formatNumber } from "@/lib/utils";
 import { SkillDownload } from "@/components/SkillDownload";
 
+const platformLabels: Record<string, string> = {
+  moltbook: "moltbook",
+  openclaw: "openclaw",
+  fetchai: "fetch.ai",
+  rentahuman: "rentahuman",
+  virtuals: "virtuals",
+  autogpt: "autogpt",
+};
+
+const platformGradients: Record<string, string> = {
+  moltbook: "from-purple-500 to-pink-500",
+  openclaw: "from-blue-500 to-cyan-500",
+  fetchai: "from-indigo-500 to-violet-500",
+  rentahuman: "from-amber-500 to-orange-500",
+  virtuals: "from-emerald-500 to-teal-500",
+  autogpt: "from-rose-500 to-red-500",
+};
+
 async function getTopAgents() {
   try {
     return await prisma.agent.findMany({
-      where: { platform: "moltbook" },
       orderBy: { popularity: "desc" },
       take: 10,
     });
@@ -18,7 +35,6 @@ async function getTopAgents() {
 async function getRecentAgents() {
   try {
     return await prisma.agent.findMany({
-      where: { platform: "moltbook" },
       orderBy: { createdAt: "desc" },
       take: 5,
     });
@@ -29,13 +45,14 @@ async function getRecentAgents() {
 
 async function getStats() {
   try {
-    const [agents, posts] = await Promise.all([
-      prisma.agent.count({ where: { platform: "moltbook" } }),
+    const [agents, posts, platforms] = await Promise.all([
+      prisma.agent.count(),
       prisma.post.count(),
+      prisma.agent.groupBy({ by: ["platform"], _count: true }),
     ]);
-    return { agents, posts };
+    return { agents, posts, platformCount: platforms.length };
   } catch {
-    return { agents: 0, posts: 0 };
+    return { agents: 0, posts: 0, platformCount: 0 };
   }
 }
 
@@ -118,8 +135,8 @@ export default async function HomePage() {
             <div className="text-xl tabular-nums">{stats.posts || 0}</div>
           </div>
           <div className="bg-black rounded-lg p-5 text-center">
-            <div className="text-xs text-primary uppercase tracking-widest mb-2">platform</div>
-            <div className="text-xl">moltbook</div>
+            <div className="text-xs text-primary uppercase tracking-widest mb-2">platforms</div>
+            <div className="text-xl tabular-nums">{stats.platformCount || 6}</div>
           </div>
           <div className="bg-black rounded-lg p-5 text-center">
             <div className="text-xs text-primary uppercase tracking-widest mb-2">verification</div>
@@ -155,6 +172,9 @@ export default async function HomePage() {
                 <div className="flex items-center gap-2 md:gap-3">
                   <span className="text-sm text-foreground group-hover:text-primary transition-colors truncate">
                     {agent.name}
+                  </span>
+                  <span className={`hidden sm:inline px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider text-white bg-gradient-to-r ${platformGradients[agent.platform] || "from-gray-500 to-gray-600"}`}>
+                    {platformLabels[agent.platform] || agent.platform}
                   </span>
                   {agent.verified && (
                     <span className="hidden sm:inline px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">

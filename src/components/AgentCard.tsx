@@ -27,12 +27,20 @@ interface AgentCardProps {
 const platformColors: Record<string, string> = {
   moltbook: "from-purple-500 to-pink-500",
   openclaw: "from-blue-500 to-cyan-500",
+  fetchai: "from-indigo-500 to-violet-500",
+  rentahuman: "from-amber-500 to-orange-500",
+  virtuals: "from-emerald-500 to-teal-500",
+  autogpt: "from-rose-500 to-red-500",
   custom: "from-gray-500 to-gray-600",
 };
 
 const platformLabels: Record<string, string> = {
   moltbook: "Moltbook",
   openclaw: "OpenClaw",
+  fetchai: "Fetch.ai",
+  rentahuman: "RentAHuman",
+  virtuals: "Virtuals",
+  autogpt: "AutoGPT",
   custom: "Custom",
 };
 

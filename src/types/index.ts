@@ -69,7 +69,7 @@ export interface TrustBreakdown {
   transparencyScore: number;
 }
 
-export type Platform = "moltbook" | "openclaw" | "custom";
+export type Platform = "moltbook" | "openclaw" | "fetchai" | "rentahuman" | "virtuals" | "autogpt" | "custom";
 
 export type SortOption = "trust" | "popularity" | "newest" | "active";
 

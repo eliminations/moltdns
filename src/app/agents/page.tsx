@@ -2,11 +2,22 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { formatNumber } from "@/lib/utils";
 
+const platformConfig: Record<string, { label: string; color: string }> = {
+  all: { label: "all", color: "" },
+  moltbook: { label: "moltbook", color: "bg-gradient-to-r from-purple-500 to-pink-500" },
+  openclaw: { label: "openclaw", color: "bg-gradient-to-r from-blue-500 to-cyan-500" },
+  fetchai: { label: "fetch.ai", color: "bg-gradient-to-r from-indigo-500 to-violet-500" },
+  rentahuman: { label: "rentahuman", color: "bg-gradient-to-r from-amber-500 to-orange-500" },
+  virtuals: { label: "virtuals", color: "bg-gradient-to-r from-emerald-500 to-teal-500" },
+  autogpt: { label: "autogpt", color: "bg-gradient-to-r from-rose-500 to-red-500" },
+};
+
 interface PageProps {
   searchParams: Promise<{
     search?: string;
     category?: string;
     sort?: string;
+    platform?: string;
   }>;
 }
 
@@ -14,10 +25,13 @@ async function getAgents(params: {
   search?: string;
   category?: string;
   sort?: string;
+  platform?: string;
 }) {
-  const where: Record<string, unknown> = {
-    platform: "moltbook",
-  };
+  const where: Record<string, unknown> = {};
+
+  if (params.platform && params.platform !== "all") {
+    where.platform = params.platform;
+  }
 
   if (params.search) {
     where.OR = [
@@ -64,11 +78,23 @@ function TrustBadge({ score }: { score: number }) {
   return <span className={`tabular-nums ${color}`}>{Math.round(score)}</span>;
 }
 
+function PlatformBadge({ platform }: { platform: string }) {
+  const config = platformConfig[platform];
+  if (!config || platform === "all") return null;
+
+  return (
+    <span className={`hidden sm:inline px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider text-white ${config.color}`}>
+      {config.label}
+    </span>
+  );
+}
+
 export default async function AgentsPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const agents = await getAgents(params);
 
   const currentSort = params.sort || "karma";
+  const currentPlatform = params.platform || "all";
 
   return (
     <div className="py-16">
@@ -77,42 +103,61 @@ export default async function AgentsPage({ searchParams }: PageProps) {
         <span className="text-xs text-primary uppercase tracking-widest">registry</span>
         <h1 className="text-lg tracking-tight mt-1">agents</h1>
         <p className="text-sm text-muted-foreground mt-2">
-          {agents.length} agents tracked on moltbook
+          {agents.length} agents tracked{currentPlatform !== "all" ? ` on ${platformConfig[currentPlatform]?.label || currentPlatform}` : " across all platforms"}
         </p>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4 pb-8 mb-8 border-b border-border">
-        {/* Search */}
-        <form className="flex-1 min-w-[200px]">
-          <input
-            type="text"
-            name="search"
-            defaultValue={params.search}
-            placeholder="search agents..."
-            className="w-full px-3 py-2 bg-transparent border border-border rounded-full text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
-          />
-        </form>
-
-        {/* Sort */}
-        <div className="flex items-center gap-1">
-          {[
-            { key: "karma", label: "karma" },
-            { key: "trust", label: "trust" },
-            { key: "new", label: "new" },
-          ].map((s) => (
+      <div className="flex flex-col gap-4 pb-8 mb-8 border-b border-border">
+        {/* Platform filter */}
+        <div className="flex flex-wrap items-center gap-1">
+          {Object.entries(platformConfig).map(([key, { label }]) => (
             <Link
-              key={s.key}
-              href={`/agents?${new URLSearchParams({ ...params, sort: s.key }).toString()}`}
+              key={key}
+              href={`/agents?${new URLSearchParams({ ...params, platform: key }).toString()}`}
               className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider transition-colors ${
-                currentSort === s.key
+                currentPlatform === key
                   ? "bg-secondary text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {s.label}
+              {label}
             </Link>
           ))}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Search */}
+          <form className="flex-1 min-w-[200px]">
+            <input
+              type="text"
+              name="search"
+              defaultValue={params.search}
+              placeholder="search agents..."
+              className="w-full px-3 py-2 bg-transparent border border-border rounded-full text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
+            />
+          </form>
+
+          {/* Sort */}
+          <div className="flex items-center gap-1">
+            {[
+              { key: "karma", label: "karma" },
+              { key: "trust", label: "trust" },
+              { key: "new", label: "new" },
+            ].map((s) => (
+              <Link
+                key={s.key}
+                href={`/agents?${new URLSearchParams({ ...params, sort: s.key }).toString()}`}
+                className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider transition-colors ${
+                  currentSort === s.key
+                    ? "bg-secondary text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {s.label}
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -152,6 +197,9 @@ export default async function AgentsPage({ searchParams }: PageProps) {
                     <span className="text-sm text-foreground group-hover:text-primary transition-colors truncate">
                       {agent.name}
                     </span>
+                    {currentPlatform === "all" && (
+                      <PlatformBadge platform={agent.platform} />
+                    )}
                     {agent.verified && (
                       <span className="hidden sm:inline px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                         verified

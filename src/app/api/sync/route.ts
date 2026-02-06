@@ -5,6 +5,10 @@ import {
   syncMoltbookPosts,
   syncMoltbookSubmolts,
   syncOpenClawAgents,
+  syncFetchAIAgents,
+  syncRentAHumanAgents,
+  syncVirtualsAgents,
+  syncAutoGPTAgents,
   syncAllMoltbookData,
   getSyncLogs,
 } from "@/lib/integrations";
@@ -45,6 +49,30 @@ export async function POST(request: NextRequest) {
     if (platform === "openclaw" || platform === "all") {
       if (type === "all" || type === "agents") {
         result.openclawAgents = await syncOpenClawAgents();
+      }
+    }
+
+    if (platform === "fetchai" || platform === "all") {
+      if (type === "all" || type === "agents") {
+        result.fetchaiAgents = await syncFetchAIAgents();
+      }
+    }
+
+    if (platform === "rentahuman" || platform === "all") {
+      if (type === "all" || type === "agents") {
+        result.rentahumanAgents = await syncRentAHumanAgents();
+      }
+    }
+
+    if (platform === "virtuals" || platform === "all") {
+      if (type === "all" || type === "agents") {
+        result.virtualsAgents = await syncVirtualsAgents();
+      }
+    }
+
+    if (platform === "autogpt" || platform === "all") {
+      if (type === "all" || type === "agents") {
+        result.autogptAgents = await syncAutoGPTAgents();
       }
     }
 
