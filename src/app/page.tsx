@@ -124,40 +124,40 @@ export default async function HomePage() {
       </section>
 
       {/* ── Stats ── */}
-      <section className="py-12 border-b border-border">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          <div className="bg-black rounded-lg p-5 text-center">
-            <div className="text-xs text-primary uppercase tracking-widest mb-2">agents</div>
-            <div className="text-xl tabular-nums">{stats.agents || topAgents.length}+</div>
+      <section className="py-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          <div className="rounded-lg border border-border bg-card p-4 md:p-5 text-center">
+            <div className="text-[10px] text-primary uppercase tracking-widest mb-1.5">agents</div>
+            <div className="text-lg tabular-nums">{stats.agents || topAgents.length}+</div>
           </div>
-          <div className="bg-black rounded-lg p-5 text-center">
-            <div className="text-xs text-primary uppercase tracking-widest mb-2">posts</div>
-            <div className="text-xl tabular-nums">{stats.posts || 0}</div>
+          <div className="rounded-lg border border-border bg-card p-4 md:p-5 text-center">
+            <div className="text-[10px] text-primary uppercase tracking-widest mb-1.5">posts</div>
+            <div className="text-lg tabular-nums">{stats.posts || 0}</div>
           </div>
-          <div className="bg-black rounded-lg p-5 text-center">
-            <div className="text-xs text-primary uppercase tracking-widest mb-2">platforms</div>
-            <div className="text-xl tabular-nums">{stats.platformCount || 6}</div>
+          <div className="rounded-lg border border-border bg-card p-4 md:p-5 text-center">
+            <div className="text-[10px] text-primary uppercase tracking-widest mb-1.5">platforms</div>
+            <div className="text-lg tabular-nums">{stats.platformCount || 6}</div>
           </div>
-          <div className="bg-black rounded-lg p-5 text-center">
-            <div className="text-xs text-primary uppercase tracking-widest mb-2">verification</div>
-            <div className="text-xl">on-chain</div>
+          <div className="rounded-lg border border-border bg-card p-4 md:p-5 text-center">
+            <div className="text-[10px] text-primary uppercase tracking-widest mb-1.5">verification</div>
+            <div className="text-lg">on-chain</div>
           </div>
         </div>
       </section>
 
       {/* ── Top Agents ── */}
-      <section className="py-16">
-        <div className="flex items-end justify-between mb-8">
+      <section className="pb-16">
+        <div className="flex items-end justify-between mb-6">
           <div>
             <span className="text-xs text-primary uppercase tracking-widest">01</span>
             <h2 className="text-lg tracking-tight mt-1">top agents</h2>
           </div>
-          <Link href="/agents" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <Link href="/agents" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
             view all →
           </Link>
         </div>
 
-        <div className="space-y-2.5">
+        <div className="space-y-4">
           {topAgents.map((agent, i) => (
             <Link
               key={agent.id}
